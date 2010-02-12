@@ -1,0 +1,77 @@
+Notes from lecture 01/27, need to take notes on lecture 02/01:
+
+*What follows may be Phase 1 specific unless otherwise noted.*
+
+File structure:
+Packages.lisp and an .asd, of course.
+Storage.lisp with PCB, Memory, Disk.
+CPU.lisp with fetch, decode, execute.
+Loader.lisp with functions to load to disk and parse job codes, data codes.
+scheduler.lisp with policies, schedulers, dispatcher and context switcher.
+kernel.lisp for the "os driver"?
+
+PCB implementation:
+** What might the threading concerns be in phase 2?
+- A hash table with prog IDs for keys and process-state object for the values.
+-- Better an object than plists\alists.
+
+RAM implementation:
+- Prof is insistent that RAM be a member of a Memory class (memory manager?) and be private.
+- A Memory method will allow access to RAM.
+- In phase 2 we will use this to implement shared memory for several simulated
+  processors (execution threads). Ram object is only accessed through memory class.
+- We'll be writing to disk back from RAM so we might as well make the disk managed as well.
+
+In Phase 1 there is no blocking or job switching. In phase 2, we will implement blocking.
+There will be some sort of paging or memory management and context switching by consequence. ~40:00
+Four programs our CPU will run: accumulator, max, average and fibs. ~51:00
+
+1. Load everything into disk, adding metadata to PCB.
+2. Long scheduler loads a few programs into RAM, referencing PCB data and policy (kwarg)?
+3. Short scheduler sets PC and registers based on ready queue via dispatcher and context switcher.
+4. CPU is called. Fetches, decodes, executes. Duh.
+
+He wants everything stored in Hex in disk and on RAM.
+It appears he means *Hex strings* and not actual hex.
+
+Everything is loaded into the disk before RAM.
+Both are arrays of 4-byte machine words which will hold hex strings of length 8.
+Will need to dump RAM and load rest of program from disk as RAM is 1/2 size of disk.
+The loader will also start loading the PCB with metadata about the jobs as it goes:
+- priority number, id, size, etc.
+The start\end addresses for each program on disk (array indices) must also be stored in the PCB.
+
+Loader Job Format: //JOB id instruction-size priority ;; is instruction-size a word-count?
+Loader Data Format: // Data data-size output-buffer scratchpad ;; all word-counts
+Once you hit // END a job-data pair is finished.
+//END signals shutdown, effectively. End of all work.
+
+Once all 30 programs are loaded into the disk and the PCB is loaded with metadata,
+return from the loader and invoke the long scheduler. Long scheduler loads programs into RAM.
+Apparently, the long scheduler also uses policies to decide the order of programs in RAM.
+Policies will be implemented based on job priority and also job size. Compare their performance.
+
+Once the long scheduler is done the short scheduler runs the dispatcher and context switcher.
+The dispatcher pulls the first thing off the ready queue and sets the program counter appropriately.
+It sets the CPU PC based on absolute addressing in RAM, not relative addressing.
+It will then also load the "registers" of the job into the CPU registers.
+In the case where jobs are being switched, the context switcher is invoked. ~24:00
+
+CPU is called, fetches by calling (memory *pc*) or (memory(pc)).
+Fetch gets instruction into instruction register, data into data register.
+He hasn't been clear about how this differs from the short scheduler.
+He may mean private CPU registers, the phase 1 spec may elucidate things a bit.
+Once registers are set, control passes to decode. Decoder figures out the instruction format,
+opcode and any arguments. Then control passes to execute which runs the decoded instructions.
+He suggests execute is a class with maybe 30-60 methods (opcodes).
+We'll try to just macroexpand into lisp first.
+The decoder can maybe do all that for us such that we just pass quoted forms to execute which
+funcalls them or something. Increment the program counter, fetch, decode, execute, etc.
+Loop until finished.
+
+CPU finally returns control to OS driver. Says my jobs are done.
+Profile and report on some analysis of the program runtimes, etc.
+
+** Processes in the ready queue are contenders for the CPU.
+Is PCB supposed to store what is in RAM, on Disk or both (address wise)? Should be RAM.
+Sounds like the ready queue gets built by the long scheduler when it works. ~19:00
