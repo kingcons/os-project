@@ -6,6 +6,6 @@
   :components ((:file "packages")
 	       (:file "storage")
 	       (:file "loader")
-;	       (:file "cpu")
+	       (:file "cpu")
 ;	       (:file "schedulers")
 	       ))
