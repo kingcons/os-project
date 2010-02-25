@@ -7,5 +7,5 @@
 	       (:file "storage")
 	       (:file "loader")
 ;	       (:file "cpu")
-;	       (:file "schedulers")
+	       (:file "scheduler")
 	       ))
