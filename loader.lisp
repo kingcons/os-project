@@ -13,9 +13,19 @@
     (loop for line = (read-line input nil) while line do
       (parse-line line))))
 
-;; And this just makes me uncomfortable for some reason.
 (defun read-hex-from-string (string)
-  (read-from-string (concatenate 'string "#x" string)))
+  (parse-integer string :radix 16))
+
+(defun to-hex-string (integer)
+  (write-to-string integer :base 16))
+;  (format nil "~X" integer))
+
+#| Do I need these?
+(defun read-binary-from-string (string)
+  (parse-integer string :radix 2))
+(defun to-binary-string (integer)
+  (write-to-string integer :base 2))
+|#
 
 (defun parse-line (line)
   (cond ((and (> (length line) 1)
@@ -41,26 +51,20 @@
 	   (format t "Loading Data.~%")
 	   (pcb-update control-list :type :data)))))
 
-;; Also, there's probably a much better way to do this...
 (defun pcb-update (metadata &key type)
   (cond ((eql type :job)
 	 (setf (gethash (third metadata) *pcb*)
 	       (make-instance 'process-state
-			      ;; Not sure if it's cheating to store the converted hex value.
-			      ;; Can change and convert at call sites if necessary.
 			      :ins-count (read-hex-from-string (fourth metadata))
 			      :priority (read-hex-from-string (fifth metadata))
+			      ; Assumes order on disk doesn't change and disk is only loaded once.
 			      :start-disk (memory-index *disk*))))
 	((eql type :data)
-	 (let* ((process-state (gethash *current-job* *pcb*))
-		(count (read-hex-from-string (third metadata)))
-		(buffer (read-hex-from-string (fourth metadata)))
-		(scratch (read-hex-from-string (fifth metadata))))
-	   ;; Use with-accessors here?
-	   (setf (data-count process-state) count)
-	   (setf (data-buffer process-state) buffer)
-	   (setf (scratchpad process-state) scratch)))
-	(t (format t "Something has gone quite wrong. We're embarassed.~%"))))
+	 (let ((process-state (gethash *current-job* *pcb*)))
+	   (setf (data-count process-state) (read-hex-from-string (third metadata))
+		 (data-buffer process-state) (read-hex-from-string (fourth metadata))
+		 (scratchpad process-state) (read-hex-from-string (fifth metadata)))))
+	 (t (format t "Something has gone quite wrong. We're embarassed.~%"))))
 
 (defun parse-data (hex-line)
   (let ((line (subseq hex-line 2 10)))
