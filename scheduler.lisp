@@ -45,9 +45,7 @@
 ;; maybe done at the memory management level
 (defun load-job (job-id)
   (let* ((current-job (gethash (write-to-string job-id) *pcb*))
-	 (num (+ (ins-count current-job)
-		   (data-count current-job)
-		   (scratchpad current-job)))
+	 (num (job-total-space current-job))
 	 (start-pos (start-disk current-job)))
     (setf (start-ram current-job) 0)
        (do ((index start-pos (+ index 1))
