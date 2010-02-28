@@ -47,3 +47,14 @@
 	 (ram-place 0 (+ ram-place 1)))
 	((equal index (+ start-pos num)) (format t "~D words loaded into RAM" num))
       (memory-write *memory* ram-place (memory-read *disk* index)))))
+
+;; dispatcher, loads the next job by priority
+(defun dispatch-next-job ()
+  (context-switch (cl-heap:dequeue *ready-queue*)))
+
+;; actually sets up the cpu to execute the job
+(defun context-switch (job-id)
+  (registers-clear *cpu1*)
+  (setf (breg *cpu1*) (start-ram (gethash (write-to-string job-id) *pcb*)))
+  (setf (pc *cpu1*) 0)
+  (setf (ireg *cpu1*) 0)) ;; ??? 
