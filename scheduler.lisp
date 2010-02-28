@@ -32,7 +32,7 @@
       (memory-write *memory* index 0))
     (setf (start-ram job) -1)))
 
-;; loads job from disk into RAM
+;; loads job from disk into RAM, adds it to the ready queue
 ;; since we're assuming 1 job at a time for phase 1,
 ;; this little hack always loads the code in ram at position 0
 ;; for phase 2, will need to find space and allocate accordingly.
@@ -42,6 +42,7 @@
 	 (num (job-total-space current-job))
 	 (start-pos (start-disk current-job)))
     (setf (start-ram current-job) 0)
+    (cl-heap:enqueue *ready-queue* job-id (priority current-job))
     (do ((index start-pos (+ index 1))
 	 (ram-place 0 (+ ram-place 1)))
 	((equal index (+ start-pos num)) (format t "~D words loaded into RAM" num))
