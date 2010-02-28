@@ -2,13 +2,7 @@
 
 ;; just a collection of job ids, phase 1's long term scheduling will
 ;; just be FIFO
-(defparameter *ready-queue* (make-array 1 :fill-pointer 0))
-
-(defun rq-get-next ()
-  (vector-pop *ready-queue*))
-
-(defun rq-insert (job-id)
-  (vector-push job-id *ready-queue*))
+(defparameter *ready-queue* (make-instance 'cl-heap:priority-queue))
 
 ;; unloads job from RAM and stores in back to disk
 (defun unload-job (job-id)
