@@ -42,7 +42,7 @@
     (cond ((string= (first control-list) "//END")
 	   (format t "All jobs have finished.~%"))
 	  ((string= command "END")
-	   (format t "Loaded job-data pair ~d.~%" *current-job*))
+	   (format t "Loaded job-data pair 0x~d.~%" *current-job*))
 	  ((string= command "JOB")
 	   (setf *current-job* (third control-list))
 	   (format t "Loading Job.~%")
