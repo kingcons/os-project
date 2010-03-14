@@ -48,15 +48,12 @@
 ; TODO: Ensure implementation correctness after spec updates.
 ;; Probably should write the retval to ireg.
 (defmethod fetch ((cpu cpu))
-  (read-hex-from-string
-   (memory-read *memory* (address cpu (pc cpu) :direct))))
-
-;(defmethod go! ((cpu cpu))
-;  (loop (execute (decode (fetch)))))
+  (setf ireg (read-hex-from-string
+	      (memory-read *memory* (address cpu (pc cpu) :direct)))))
 
 (defmethod decode ((cpu cpu))
   ;; TODO? Needs to be updated to pull instruction from ireg
-  (let* ((instruction (fetch cpu))
+  (let* ((instruction ireg)
 	 (ins-type (ldb (byte 2 30) instruction))
 	 (opcode (ldb (byte 6 24) instruction))
 	 (reg1 0) (reg2 0) (reg3 0))
@@ -85,72 +82,72 @@
       ;; input-buf and output-buf need address resolution...
       ;; Finally, some macros to tidy this up might be nice.
       (#x00 ; RD
-	 (register-write cpu 0
-			 (read-from-hex-string input-buf)))
+	 `(register-write cpu 0
+			  (read-from-hex-string input-buf)))
       (#x01 ; WR
-	 (setf output-buf (register-read cpu 0)))
+	 `(setf output-buf (register-read cpu 0)))
       (#x02 ; ST
-	 ())
+	 `())
       (#x03 ; LW
-	 ())
+	 `())
       (#x04 ; MOV
-	 ())
+	 `())
       (#x05 ; ADD
-	 (register-write cpu reg3
+	 `(register-write cpu reg3
 			 (+ (register-read cpu reg1)
 			    (register-read cpu reg2))))
       (#x06 ; SUB
-	 (register-write cpu reg3
-			 (- (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 `(register-write cpu reg3
+			  (- (register-read cpu reg1)
+			     (register-read cpu reg2))))
       (#x07 ; MUL
-	 (register-write cpu reg3
-			 (* (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 `(register-write cpu reg3
+			  (* (register-read cpu reg1)
+			     (register-read cpu reg2))))
       (#x08 ; DIV
-	 (register-write cpu reg3
-			 (/ (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 `(register-write cpu reg3
+			  (/ (register-read cpu reg1)
+			     (register-read cpu reg2))))
       (#x09 ; AND
-	 (register-write cpu reg3
-			 (logand (register-read cpu reg1)
-				 (register-read cpu reg2))))
+	 `(register-write cpu reg3
+			  (logand (register-read cpu reg1)
+				  (register-read cpu reg2))))
       (#x0a ; OR
-	 (register-write cpu reg3
-			 (logior (register-read cpu reg1)
-				 (register-read cpu reg2))))
+	 `(register-write cpu reg3
+			  (logior (register-read cpu reg1)
+				  (register-read cpu reg2))))
       (#x0b ; MOVI
-	 ())
+	 `())
       (#x0c ; ADDI
-	 ())
+	 `())
       (#x0d ; MULI
-	 ())
+	 `())
       (#x0e ; DIVI
-	 ())
+	 `())
       (#x0f ; LDI
-	 ())
+	 `())
       (#x10 ; SLT
-	 (if (< (register-read cpu reg1)
-		(register-read cpu reg2))
-	     (register-write cpu reg3 1)
-	     (register-write cpu reg3 0)))
+	 `(if (< (register-read cpu reg1)
+		 (register-read cpu reg2))
+	      (register-write cpu reg3 1)
+	      (register-write cpu reg3 0)))
       (#x11 ; SLTI
-	 ())
+	 `())
       (#x12 ; HLT
-	 ())
+	 `())
       (#x13 ; NOP
-	 '())
+	 `())
       (#x14 ; JMP
-	 ())
+	 `())
       (#x15 ; BEQ
-	 ())
+	 `())
       (#x16 ; BNEQ
-	 ())
+	 `())
       (#x17 ; BEZ
-	 ())
+	 `())
       (#x18 ; BNZ
-	 ())
+	 `())
       (#x19 ; BGZ
-	 ())
+	 `())
       (#x1a ; BLZ
-	 ()))))
+	 `()))))
