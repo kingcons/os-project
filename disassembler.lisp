@@ -1,14 +1,13 @@
 (in-package :os-project)
 
 (defun disasm (job-id &key (show-separately nil) (extra nil))
-  (let* ((job-metadata (gethash (write-to-string job-id) *pcb*))
+  (let* ((job-metadata (gethash job-id *pcb*))
 	 (job-start (start-disk job-metadata))
 	 (job-end (+ job-start (ins-count job-metadata))))
     (format t "Disassembly for Job ~a:~%" job-id)
-    (format t "Index  ~11a instr  reg1 reg2 reg3~%" "Hex")
+    (format t "~11a instr  reg1 reg2 reg3~%" "Hex")
     (loop for i from job-start to job-end do
       (let ((hex-string (memory-read *disk* i)))
-	(format t "~5a  0x~8a: " i hex-string)
 	(cond (extra
 	       (pretty-print-asm hex-string :ins-data t :op-data t))
 	      (show-separately
@@ -21,6 +20,7 @@
 	 (ins-type (ldb (byte 2 30) ins))
 	 (opcode (ldb (byte 6 24) ins))
 	 (reg1 0) (reg2 0) (reg3 0)
+	 (hexstr (format nil "0x~8a: " hex-str))
 	 (opcodes #("rd" "wr" "st" "lw" "mov" "add" "sub" "mul" "div" "and"
 		    "or" "movi" "addi" "muli" "divi" "ldi" "slt" "slti"
 		    "hlt" "nop" "jmp" "beq" "bneq" "bez" "bnz" "bgz" "blz")))
@@ -79,12 +79,31 @@
 	(#x19 (setf op-data "Type: I. Jump to an Address when b-reg > 0"))
 	(#x1a (setf op-data "Type: I. Jump to an Address when b-reg < 0"))))
     (if raw
-	(format t "~5a  ~4a ~4a ~4a~%" (aref opcodes opcode) reg1 reg2 reg3)
-	(format t "~%ins-type opcode reg1 reg2 reg3~%~8a ~6a ~4a ~4a ~4a~%"
-		ins-type (aref opcodes opcode) reg1 reg2 reg3))
+	(format t "~a ~5a  ~4a ~4a ~4a~%" hexstr (aref opcodes opcode) reg1 reg2 reg3)
+	(format t "~a~%ins-type opcode reg1 reg2 reg3~%~8a ~6a ~4a ~4a ~4a~%"
+		hexstr ins-type (aref opcodes opcode) reg1 reg2 reg3))
     (when ins-data
       (format t "Instruction Format is ~a~%" ins-data))
     (when op-data
       (format t "Opcode is ~a~%" op-data))
     (unless raw
       (format t "~%"))))
+
+(defun show-all-users (&key (opcode nil) (ins-type nil))
+  ;; What would be a better way to write this?
+  (loop for result in (map-ins #'(lambda (ins)
+				   (cond (opcode
+					  (= opcode (ldb (byte 6 24) ins)))
+					 (ins-type
+					  (= ins-type (ldb (byte 2 30) ins))))))
+	do (pretty-print-asm result :raw t)))
+
+(defun map-ins (condition)
+  (let ((result nil))
+    (maphash #'(lambda (k v)
+		 (loop for i from (start-disk v) to (+ (start-disk v) (ins-count v)) do
+		   (let* ((instruction (memory-read *disk* i))
+			  (ins (read-hex-from-string instruction)))
+		     (when (funcall condition ins)
+		       (pushnew instruction result :test #'equal))))) *pcb*)
+    result))
