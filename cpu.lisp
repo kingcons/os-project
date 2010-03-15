@@ -51,48 +51,6 @@
   (setf ireg (read-hex-from-string
 	      (memory-read *memory* (address cpu (pc cpu) :direct)))))
 
-(defun disasm (job-id &key (show-separately nil))
-  (let* ((job-metadata (gethash (write-to-string job-id) *pcb*))
-	 (job-start (start-disk job-metadata))
-	 (job-end (+ job-start (ins-count job-metadata))))
-    (format t "Disassemly for Job ~a:~%" job-id)
-    (loop for i from job-start to job-end do
-      (let ((hex-string (memory-read *disk* i)))
-	(format t "~4a  0x~8a: " i hex-string)
-	(if show-separately
-	    (pretty-print-asm hex-string)
-	    (pretty-print-asm hex-string :raw t))))))
-  
-(defun pretty-print-asm (hex-str &key (raw nil))
-  (let* ((ins (read-hex-from-string hex-str))
-	 (ins-type (ldb (byte 2 30) ins))
-	 (opcode (ldb (byte 6 24) ins))
-	 (reg1 0) (reg2 0) (reg3 0)
-	 (opcodes #("rd" "wr" "st" "lw" "mov" "add" "sub" "mul" "div" "and"
-		    "or" "movi" "addi" "muli" "divi" "ldi" "slt" "slti"
-		    "hlt" "nop" "jmp" "beq" "bneq" "bez" "bnz" "bgz" "blz")))
-    (flet ((bit-range (width position)
-	     (ldb (byte width position) ins)))
-      (ecase ins-type
-	(#b00
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 4 12)))
-	(#b01
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0)))
-	(#b10
-	   (setf reg1 (bit-range 24 0)))
-	(#b11
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0)))))
-    (if raw
-	(format t "~5a  ~3a ~3a ~3a~%" (aref opcodes opcode) reg1 reg2 reg3)
-	(format t "~%ins-type opcode reg1 reg2 reg3~%~8b ~6a ~4a ~4a ~4a~%~%"
-		ins-type (aref opcodes opcode) reg1 reg2 reg3))))
-
 ;; (defmethod decode ((cpu cpu))
 ;;   (let* ((instruction (iref cpu))
 ;; 	 (ins-type (ldb (byte 2 30) instruction))

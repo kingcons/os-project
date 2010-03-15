@@ -8,4 +8,5 @@
 	       (:file "loader")
 	       (:file "scheduler")
 	       (:file "cpu")
+	       (:file "disassembler")
 	       ))
