@@ -107,3 +107,10 @@
 		     (when (funcall condition ins)
 		       (pushnew instruction result :test #'equal))))) *pcb*)
     result))
+
+(defun show-all-pcb-slots (job-id)
+  (let ((slots '(ins-count priority start-disk start-ram
+		 data-count data-buffer scratchpad))) ;status)))
+    (loop for slot in slots do
+      ;; TODO: Fails if slot is unbound.
+      (format t "~a ~a slot is: ~a~%" job-id slot (slot-value (gethash job-id *pcb*) slot)))))

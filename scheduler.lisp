@@ -39,6 +39,7 @@
 ;; maybe done at the memory management level
 (defun load-job (job-id)
   (let* ((current-job (gethash (write-to-string job-id) *pcb*))
+	 ;; TODO: write-to-string fails for hex i.e. #x0a
 	 (num (job-total-space current-job))
 	 (start-pos (start-disk current-job)))
     (setf (start-ram current-job) 0)
@@ -57,4 +58,4 @@
   (registers-clear *cpu1*)
   (setf (breg *cpu1*) (start-ram (gethash (write-to-string job-id) *pcb*)))
   (setf (pc *cpu1*) 0)
-  (setf (ireg *cpu1*) 0)) ;; ??? 
+  (setf (ireg *cpu1*) 0))

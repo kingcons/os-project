@@ -42,6 +42,7 @@
     (cond ((string= (first control-list) "//END")
 	   (format t "All jobs have finished.~%"))
 	  ((string= command "END")
+	   (setf (status (gethash *current-job* *pcb*)) :in-disk)
 	   (format t "Loaded job-data pair 0x~d.~%" *current-job*))
 	  ((string= command "JOB")
 	   (setf *current-job* (third control-list))
