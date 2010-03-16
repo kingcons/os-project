@@ -1,0 +1,34 @@
+**Brit's TODO
+From highest priority to lowest...
+
+1.
+Addresses are byte-addresses.
+- Always divide by 4 (i.e. (memory-read *memory* (/ reg3 4))) or only when above register-count/16?
+Finish decoder.
+
+2.
+Get scheduler loading ready-queue and memory until next job exceeds memory capacity.
+- How to best do this?
+-- Obvious solution: Compute next job size from *PCB*, ensure it fits in remaining space.
+- How to iterate though jobs?
+-- Obvious solution: Loop through *PCB* checking status?
+--- Set :in-disk or :in-memory during loads, ignoring :terminated/finished?
+--- Ensure status field in PCB is being set appropriately throughout program.
+- May need to fix bug in scheduler (see task 4, scheduler.lisp L41-42).
+
+3.
+Look at profiling and timing methods.
+- Where to store?
+-- In PCB seems rather obvious, or in another hashtable that takes job-ids as keys.
+- What's in a job-profile object?
+-- IO ops (load/stores), Time in waiting queue and  Total Completion Time as a bare minimum.
+- How to profile?
+-- See if the output from time can be redirected. If not, write a record-runtime macro or similar.
+
+4. *Very Low Priority, Speculative*
+Jobs are loaded in to various places with string keys. How annoying!
+Perhaps read the hex strings and insert them that way. Could this cause any problems?
+
+;; Watch lecture 01 again, ensure conformance to ideas about RQ/Scheduler + PCB?
+
+**Justin's TODO
