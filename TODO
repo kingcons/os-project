@@ -2,11 +2,6 @@
 From highest priority to lowest...
 
 1.
-Addresses are byte-addresses.
-- Always divide by 4 (i.e. (memory-read *memory* (/ reg3 4))) or only when above register-count/16?
-Finish decoder.
-
-2.
 Get scheduler loading ready-queue and memory until next job exceeds memory capacity.
 - How to best do this?
 -- Obvious solution: Compute next job size from *PCB*, ensure it fits in remaining space.
@@ -14,9 +9,10 @@ Get scheduler loading ready-queue and memory until next job exceeds memory capac
 -- Obvious solution: Loop through *PCB* checking status?
 --- Set :in-disk or :in-memory during loads, ignoring :terminated/finished?
 --- Ensure status field in PCB is being set appropriately throughout program.
-- May need to fix bug in scheduler (see task 4, scheduler.lisp L41-42).
+- Likely need to rewrite load-job to do the present work of context switch.
+-- Breg, pc etc are always set to 0.
 
-3.
+2.
 Look at profiling and timing methods.
 - Where to store?
 -- In PCB seems rather obvious, or in another hashtable that takes job-ids as keys.
@@ -25,10 +21,18 @@ Look at profiling and timing methods.
 - How to profile?
 -- See if the output from time can be redirected. If not, write a record-runtime macro or similar.
 
-4. *Very Low Priority, Speculative*
-Jobs are loaded in to various places with string keys. How annoying!
-Perhaps read the hex strings and insert them that way. Could this cause any problems?
+3. *Very Low Priority, Speculative*
+Ensure correctness of MOV.
 
 ;; Watch lecture 01 again, ensure conformance to ideas about RQ/Scheduler + PCB?
+
+Long Term/Fun:
+Just make the code ungross.
+Work on style, eliminate hacks, improve readability+formatting, etc.
+-- Abstract things where possible. Use macros where necessary/sane.
+--- Potential targets:
+---- Cpu.lisp is easily the ugliest code in the whole project.
+----- Decode in particular is 120 lines of raw madness. Refactor, rewrite, sanify.
+---- Unify load-job and unload-job. That is totally one function waiting to happen.
 
 **Justin's TODO

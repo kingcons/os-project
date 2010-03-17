@@ -3,9 +3,6 @@
 ;; Programs are converted from hex strings to integers (binary)
 ;; on load from memory.
 
-;; Register 0 is the accumulator, Register 1 is "true zero".
-;; Does it make sense to hardcode this in some fashion?
-
 ;; Note, integers may have integer-length under 32 bits.
 ;; They still have top bits. Do not be fooled and try
 ;; to ldb only beneath their integer-length.
@@ -38,115 +35,130 @@
 (defmethod register-read ((cpu cpu) index)
   (aref (registers cpu) index))
 
-;; SERIOUS CONCERNS HERE
-(defmethod address ((cpu cpu) type offset)
-  (ecase type
-    (:direct (+ (breg cpu) offset))
-; TODO: Correct implementation once prof clarifies\corrects the spec.
-    (:indirect (+ (breg cpu) (ireg cpu) offset))))
+(defmethod address ((cpu cpu) address &key (with-base t))
+  (if with-base
+      (+ (breg cpu) (/ address 4))
+      (/ address 4)))
 
-; TODO: Ensure implementation correctness after spec updates.
-;; Probably should write the retval to ireg.
 (defmethod fetch ((cpu cpu))
-  (setf ireg (read-hex-from-string
-	      (memory-read *memory* (address cpu (pc cpu) :direct)))))
+  (setf (ireg cpu) (read-hex-from-string
+		    (memory-read *memory* (+ (breg cpu) (pc cpu)))))
+  (incf (pc cpu)))
 
-;; (defmethod decode ((cpu cpu))
-;;   (let* ((instruction (iref cpu))
-;; 	 (ins-type (ldb (byte 2 30) instruction))
-;; 	 (opcode (ldb (byte 6 24) instruction))
-;; 	 (reg1 0) (reg2 0) (reg3 0))
-;;     (flet ((bit-range (width position)
-;; 	     (ldb (byte width position) instruction)))
-;;       (ecase ins-type
-;; 	(#b00
-;; 	   (setf reg1 (bit-range 4 20))
-;; 	   (setf reg2 (bit-range 4 16))
-;; 	   (setf reg3 (bit-range 4 12)))
-;; 	(#b01
-;; 	   (setf reg1 (bit-range 4 20))
-;; 	   (setf reg2 (bit-range 4 16))
-;; 	   (setf reg3 (bit-range 16 0)))
-;; 	(#b10
-;; 	   (setf reg1 (bit-range 24 0)))
-;; 	(#b11
-;; 	   (setf reg1 (bit-range 4 20))
-;; 	   (setf reg2 (bit-range 4 16))
-;; 	   (setf reg3 (bit-range 16 0)))))
-;;     (ecase opcode
-;;       ;; TODO:
-;;       ;; Right now this ecase executes instructions.
-;;       ;; --We'll probably have to split that out.
-;;       ;; Many of these opcodes are unwritten or pseudocode.
-;;       ;; input-buf and output-buf need address resolution...
-;;       ;; Finally, some macros to tidy this up might be nice.
-;;       (#x00 ; RD
-;; 	 `(register-write cpu 0
-;; 			  (read-from-hex-string input-buf)))
-;;       (#x01 ; WR
-;; 	 `(setf output-buf (register-read cpu 0)))
-;;       (#x02 ; ST
-;; 	 `())
-;;       (#x03 ; LW
-;; 	 `())
-;;       (#x04 ; MOV
-;; 	 `())
-;;       (#x05 ; ADD
-;; 	 `(register-write cpu reg3
-;; 			 (+ (register-read cpu reg1)
-;; 			    (register-read cpu reg2))))
-;;       (#x06 ; SUB
-;; 	 `(register-write cpu reg3
-;; 			  (- (register-read cpu reg1)
-;; 			     (register-read cpu reg2))))
-;;       (#x07 ; MUL
-;; 	 `(register-write cpu reg3
-;; 			  (* (register-read cpu reg1)
-;; 			     (register-read cpu reg2))))
-;;       (#x08 ; DIV
-;; 	 `(register-write cpu reg3
-;; 			  (/ (register-read cpu reg1)
-;; 			     (register-read cpu reg2))))
-;;       (#x09 ; AND
-;; 	 `(register-write cpu reg3
-;; 			  (logand (register-read cpu reg1)
-;; 				  (register-read cpu reg2))))
-;;       (#x0a ; OR
-;; 	 `(register-write cpu reg3
-;; 			  (logior (register-read cpu reg1)
-;; 				  (register-read cpu reg2))))
-;;       (#x0b ; MOVI
-;; 	 `())
-;;       (#x0c ; ADDI
-;; 	 `())
-;;       (#x0d ; MULI
-;; 	 `())
-;;       (#x0e ; DIVI
-;; 	 `())
-;;       (#x0f ; LDI
-;; 	 `())
-;;       (#x10 ; SLT
-;; 	 `(if (< (register-read cpu reg1)
-;; 		 (register-read cpu reg2))
-;; 	      (register-write cpu reg3 1)
-;; 	      (register-write cpu reg3 0)))
-;;       (#x11 ; SLTI
-;; 	 `())
-;;       (#x12 ; HLT
-;; 	 `())
-;;       (#x13 ; NOP
-;; 	 `())
-;;       (#x14 ; JMP
-;; 	 `())
-;;       (#x15 ; BEQ
-;; 	 `())
-;;       (#x16 ; BNEQ
-;; 	 `())
-;;       (#x17 ; BEZ
-;; 	 `())
-;;       (#x18 ; BNZ
-;; 	 `())
-;;       (#x19 ; BGZ
-;; 	 `())
-;;       (#x1a ; BLZ
-;; 	 `()))))
+(defmethod decode ((cpu cpu))
+  (let* ((instruction (ireg cpu))
+	 (ins-type (ldb (byte 2 30) instruction))
+	 (opcode (ldb (byte 6 24) instruction))
+	 (reg1 0) (reg2 0) (reg3 0))
+    (flet ((bit-range (width position)
+	     (ldb (byte width position) instruction)))
+      (ecase ins-type
+	(#b00
+	   (setf reg1 (bit-range 4 20))
+	   (setf reg2 (bit-range 4 16))
+	   (setf reg3 (bit-range 4 12)))
+	(#b01
+	   (setf reg1 (bit-range 4 20))
+	   (setf reg2 (bit-range 4 16))
+	   (setf reg3 (bit-range 16 0)))
+	(#b10
+	   (setf reg1 (bit-range 24 0)))
+	(#b11
+	   (setf reg1 (bit-range 4 20))
+	   (setf reg2 (bit-range 4 16))
+	   (setf reg3 (bit-range 16 0)))))
+    (ecase opcode
+      ;; I can't think of a good way to split out execution from decode.
+      ;; Finally, some macros to tidy this up might be nice.
+      (#x00 ; RD
+	 (register-write cpu reg1
+			 (read-hex-from-string
+			  (memory-read *memory*
+				       (address cpu (if (zerop reg2)
+							reg3
+							(register-read cpu reg2)))))))
+      (#x01 ; WR
+	 (memory-write *memory*
+		       (address cpu (if (zerop reg2)
+					reg3
+					(register-read cpu reg2)))
+		       (register-read cpu reg1)))
+      (#x02 ; ST
+	 (memory-write *memory*
+		       (address cpu (register-read cpu reg2))
+		       (register-read cpu reg1)))
+      (#x03 ; LW
+	 (register-write cpu reg2 (memory-read *memory*
+					       (register-read cpu reg1))))
+      (#x04 ; MOV, INCOMPLETE, see peculiar use case in Job 7
+	 (register-write cpu reg1 (register-read cpu reg2)))
+      (#x05 ; ADD
+	 (register-write cpu reg3
+			 (+ (register-read cpu reg1)
+			    (register-read cpu reg2))))
+      (#x06 ; SUB, never used in provided asm
+	 (register-write cpu reg3
+			 (- (register-read cpu reg1)
+			    (register-read cpu reg2))))
+      (#x07 ; MUL, never used in provided asm
+	 (register-write cpu reg3
+			 (* (register-read cpu reg1)
+			    (register-read cpu reg2))))
+      (#x08 ; DIV
+	 (register-write cpu reg3
+			 (/ (register-read cpu reg1)
+			    (register-read cpu reg2))))
+      (#x09 ; AND, never used in provided asm
+	 (register-write cpu reg3
+			 (logand (register-read cpu reg1)
+				 (register-read cpu reg2))))
+      (#x0a ; OR, never used in provided asm
+	 (register-write cpu reg3
+			 (logior (register-read cpu reg1)
+				 (register-read cpu reg2))))
+      (#x0b ; MOVI
+	 (register-write cpu reg2 reg3))
+      (#x0c ; ADDI
+	 (register-write cpu reg2 (+ reg3 (register-read cpu reg2))))
+      (#x0d ; MULI, never used in provided asm
+	 (register-write cpu reg2 (* reg3 (register-read cpu reg2))))
+      (#x0e ; DIVI, never used in provided asm
+	 (register-write cpu reg2 (/ reg3 (register-read cpu reg2))))
+      (#x0f ; LDI
+	 (register-write cpu reg2
+			 (memory-read *memory* (address reg3))))
+      (#x10 ; SLT
+	 (if (< (register-read cpu reg1)
+		(register-read cpu reg2))
+	     (register-write cpu reg3 1)
+	     (register-write cpu reg3 0)))
+      (#x11 ; SLTI, never used in provided asm
+	 (if (< (register-read cpu reg1) reg2)
+	     (register-write cpu reg3 1)
+	     (register-write cpu reg3 0)))
+      (#x12 ; HLT
+	 nil)
+      (#x13 ; NOP, never used in provided asm
+	 nil)
+      (#x14 ; JMP, never used in provided asm
+	 ())
+      (#x15 ; BEQ
+	 (when (= (register-read cpu reg1)
+		  (register-read cpu reg2))
+	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+      (#x16 ; BNEQ
+	 (unless (= (register-read cpu reg1)
+		    (register-read cpu reg2))
+	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+      (#x17 ; BEZ, never used in provided asm
+	 (when (zerop (register-read cpu reg2))
+	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+      (#x18 ; BNZ, never used in provided asm
+	 (unless (zerop (regiser-read cpu reg1))
+	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+      (#x19 ; BGZ, never used in provided asm
+	 (when (> (register-read cpu reg1) 0)
+	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+      (#x1a ; BLZ, never used in provided asm
+	 (when (< (register-read cpu reg1) 0)
+	   (setf (pc cpu) (address cpu reg3 :with-base nil)))))))
