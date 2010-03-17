@@ -36,3 +36,9 @@ Work on style, eliminate hacks, improve readability+formatting, etc.
 ---- Unify load-job and unload-job. That is totally one function waiting to happen.
 
 **Justin's TODO
+
+1. OS Driver (or Kernel, aka Main Loop)
+
+2. Documentation (Report)
+
+3. Manually work out 3-4 jobs and check against OS output
