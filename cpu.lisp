@@ -154,7 +154,7 @@
 	 (when (zerop (register-read cpu reg2))
 	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
       (#x18 ; BNZ, never used in provided asm
-	 (unless (zerop (regiser-read cpu reg1))
+	 (unless (zerop (register-read cpu reg1))
 	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
       (#x19 ; BGZ, never used in provided asm
 	 (when (> (register-read cpu reg1) 0)
@@ -162,3 +162,7 @@
       (#x1a ; BLZ, never used in provided asm
 	 (when (< (register-read cpu reg1) 0)
 	   (setf (pc cpu) (address cpu reg3 :with-base nil)))))))
+
+(defun reset ()
+  (clear-all-data)
+  (setf *cpu1* (make-instance 'cpu)))

@@ -36,7 +36,6 @@
   (fill-pointer (slot-value device 'storage)))
 
 ;; Process state object to be stored in the PCB.
-;; Potentially also store parent process, child process list.
 (defclass process-state ()
   ((ins-count
     :initarg :ins-count
@@ -55,3 +54,8 @@
    (data-buffer :accessor data-buffer)
    (scratchpad :accessor scratchpad)
    (status :accessor status)))
+
+(defun clear-all-data ()
+  (setf *pcb* (make-hash-table :test #'equal))
+  (setf *memory* (make-instance 'storage-device :size 1024))
+  (setf *disk* (make-instance 'storage-device :size 2048)))
