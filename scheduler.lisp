@@ -6,7 +6,7 @@
 
 ;; unloads job from RAM and stores in back to disk
 (defun unload-job (job-id)
-  (let* ((current-job (gethash (write-to-string job-id) *pcb*))
+  (let* ((current-job (gethash job-id *pcb*))
 	 (num (+ (data-buffer current-job)
 		 (data-count current-job)))
 	 (start-ram-pos (+ (start-ram current-job) (ins-count current-job)))
@@ -38,7 +38,7 @@
 ;; for phase 2, will need to find space and allocate accordingly.
 ;; maybe done at the memory management level
 (defun load-job (job-id)
-  (let* ((current-job (gethash (write-to-string job-id) *pcb*))
+  (let* ((current-job (gethash job-id *pcb*))
 	 ;; TODO: write-to-string fails for hex i.e. #x0a
 	 (num (job-total-space current-job))
 	 (start-pos (start-disk current-job)))
@@ -56,6 +56,6 @@
 ;; actually sets up the cpu to execute the job
 (defun context-switch (job-id)
   (registers-clear *cpu1*)
-  (setf (breg *cpu1*) (start-ram (gethash (write-to-string job-id) *pcb*)))
+  (setf (breg *cpu1*) (start-ram (gethash job-id *pcb*)))
   (setf (pc *cpu1*) 0)
   (setf (ireg *cpu1*) 0))

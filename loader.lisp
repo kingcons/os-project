@@ -45,7 +45,7 @@
 	   (setf (status (gethash *current-job* *pcb*)) :in-disk)
 	   (format t "Loaded job-data pair 0x~d.~%" *current-job*))
 	  ((string= command "JOB")
-	   (setf *current-job* (third control-list))
+	   (setf *current-job* (read-hex-from-string (third control-list)))
 	   (format t "Loading Job.~%")
 	   (pcb-update control-list :type :job))
 	  ((string= command "Data")
@@ -54,7 +54,7 @@
 
 (defun pcb-update (metadata &key type)
   (cond ((eql type :job)
-	 (setf (gethash (third metadata) *pcb*)
+	 (setf (gethash (read-hex-from-string (third metadata)) *pcb*)
 	       (make-instance 'process-state
 			      :ins-count (read-hex-from-string (fourth metadata))
 			      :priority (read-hex-from-string (fifth metadata))
