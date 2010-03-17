@@ -13,6 +13,10 @@ Get scheduler loading ready-queue and memory until next job exceeds memory capac
 -- Breg, pc etc are always set to 0.
 
 2.
+Test decode and fetch on job 1.
+Ensure jobs transition and CPU eventaully halts.
+
+3.
 Look at profiling and timing methods.
 - Where to store?
 -- In PCB seems rather obvious, or in another hashtable that takes job-ids as keys.
@@ -21,7 +25,7 @@ Look at profiling and timing methods.
 - How to profile?
 -- See if the output from time can be redirected. If not, write a record-runtime macro or similar.
 
-3. *Very Low Priority, Speculative*
+4. *Very Low Priority, Speculative*
 Ensure correctness of MOV.
 
 ;; Watch lecture 01 again, ensure conformance to ideas about RQ/Scheduler + PCB?

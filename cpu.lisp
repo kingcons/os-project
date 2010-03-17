@@ -35,10 +35,10 @@
 (defmethod register-read ((cpu cpu) index)
   (aref (registers cpu) index))
 
-(defmethod address ((cpu cpu) address &key (with-base t))
+(defmethod address ((cpu cpu) addr &key (with-base t))
   (if with-base
-      (+ (breg cpu) (/ address 4))
-      (/ address 4)))
+      (+ (breg cpu) (/ addr 4))
+      (/ addr 4)))
 
 (defmethod fetch ((cpu cpu))
   (setf (ireg cpu) (read-hex-from-string
@@ -88,8 +88,10 @@
 		       (address cpu (register-read cpu reg2))
 		       (register-read cpu reg1)))
       (#x03 ; LW
-	 (register-write cpu reg2 (memory-read *memory*
-					       (register-read cpu reg1))))
+	 (register-write cpu reg2
+			 (read-hex-from-string
+			  (memory-read *memory*
+				       (register-read cpu reg1)))))
       (#x04 ; MOV, INCOMPLETE, see peculiar use case in Job 7
 	 (register-write cpu reg1 (register-read cpu reg2)))
       (#x05 ; ADD
@@ -126,7 +128,8 @@
 	 (register-write cpu reg2 (/ reg3 (register-read cpu reg2))))
       (#x0f ; LDI
 	 (register-write cpu reg2
-			 (memory-read *memory* (address reg3))))
+			 (read-hex-from-string
+			  (memory-read *memory* (address cpu reg3)))))
       (#x10 ; SLT
 	 (if (< (register-read cpu reg1)
 		(register-read cpu reg2))
