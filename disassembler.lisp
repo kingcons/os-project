@@ -3,7 +3,7 @@
 (defun disasm (job-id &key (show-separately nil) (extra nil))
   (let* ((job-metadata (gethash job-id *pcb*))
 	 (job-start (start-disk job-metadata))
-	 (job-end (+ job-start (ins-count job-metadata))))
+	 (job-end (+ job-start (1- (ins-count job-metadata)))))
     (format t "Disassembly for Job ~a:~%" job-id)
     (format t "~11a instr  reg1 reg2 reg3~%" "Hex")
     (loop for i from job-start to job-end do
@@ -15,7 +15,7 @@
 	      (t
 	       (pretty-print-asm hex-string :raw t)))))))
   
-(defun pretty-print-asm (hex-str &key (raw nil) (ins-data nil) (op-data nil))
+(defun pretty-print-asm (hex-str &key (raw nil) (ins-data nil) (op-data nil) (job-id nil))
   (let* ((ins (read-hex-from-string hex-str))
 	 (ins-type (ldb (byte 2 30) ins))
 	 (opcode (ldb (byte 6 24) ins))
@@ -78,6 +78,8 @@
 	(#x18 (setf op-data "Type: I. Jump to an Address when b-reg != 0"))
 	(#x19 (setf op-data "Type: I. Jump to an Address when b-reg > 0"))
 	(#x1a (setf op-data "Type: I. Jump to an Address when b-reg < 0"))))
+    (when job-id
+      (format t "Job ~a, " job-id))
     (if raw
 	(format t "~a ~5a  ~4a ~4a ~4a~%" hexstr (aref opcodes opcode) reg1 reg2 reg3)
 	(format t "~a~%ins-type opcode reg1 reg2 reg3~%~8a ~6a ~4a ~4a ~4a~%"
@@ -89,23 +91,30 @@
     (unless raw
       (format t "~%"))))
 
-(defun show-all-users (&key (opcode nil) (ins-type nil))
+(defun show-all-users (&key (opcode nil) (ins-type nil) (show-job nil))
   ;; What would be a better way to write this?
-  (loop for result in (map-ins #'(lambda (ins)
-				   (cond (opcode
-					  (= opcode (ldb (byte 6 24) ins)))
-					 (ins-type
-					  (= ins-type (ldb (byte 2 30) ins))))))
-	do (pretty-print-asm result :raw t)))
+  (loop for result in (reverse
+			(map-ins #'(lambda (ins)
+				     (cond (opcode
+					    (= opcode (ldb (byte 6 24) ins)))
+					   (ins-type
+					    (= ins-type (ldb (byte 2 30) ins)))))
+			    :show-job show-job))
+	do (if show-job
+	       (pretty-print-asm (car result) :raw t :job-id (cdr result))
+	       (pretty-print-asm result :raw t))))
 
-(defun map-ins (condition)
+(defun map-ins (condition &key (show-job nil))
   (let ((result nil))
-    (maphash #'(lambda (k v)
-		 (loop for i from (start-disk v) to (+ (start-disk v) (ins-count v)) do
+    (maphash #'(lambda (job-id job)
+		 (loop for i from (start-disk job) to (1- (+ (start-disk job) (ins-count job))) do
 		   (let* ((instruction (memory-read *disk* i))
 			  (ins (read-hex-from-string instruction)))
-		     (when (funcall condition ins)
-		       (pushnew instruction result :test #'equal))))) *pcb*)
+		     (cond ((and show-job (funcall condition ins))
+			    (pushnew (cons instruction job-id) result
+				     :test #'equal :key #'car))
+			   ((funcall condition ins)
+			    (pushnew instruction result :test #'equal)))))) *pcb*)
     result))
 
 (defun show-all-pcb-slots (job-id)
