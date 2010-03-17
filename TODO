@@ -32,3 +32,9 @@ Perhaps read the hex strings and insert them that way. Could this cause any prob
 ;; Watch lecture 01 again, ensure conformance to ideas about RQ/Scheduler + PCB?
 
 **Justin's TODO
+
+1. OS Driver (or Kernel, aka Main Loop)
+
+2. Documentation (Report)
+
+3. Manually work out 3-4 jobs and check against OS output
