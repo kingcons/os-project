@@ -43,6 +43,7 @@
 	       for j from start-ram to (1- (+ start-ram total-space))
 	       do (memory-write *disk* i (memory-read *memory* j)))
 	 (setf (status job) :in-disk)
+	 (setf (start-ram job) -1)
 	 (format t "~d words saved to disk.~%" total-space)))))
 
 (defun short-scheduler (cpu)

@@ -61,7 +61,9 @@
     :initarg :start-disk
     :initform (error "Must supply disk start index.")
     :reader start-disk)
-   (start-ram :accessor start-ram)
+   (start-ram
+    :initform -1
+    :accessor start-ram)
    (data-count :accessor data-count)
    (data-buffer :accessor data-buffer)
    (scratchpad :accessor scratchpad)
