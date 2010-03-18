@@ -6,15 +6,8 @@ Test decode and fetch on job 1.
 When all jobs are finished, clear RAM and unless *job-order* is nil invoke LTS. Back to work CPU.
 Ensure jobs transition and CPU eventaully halts.
 Make sure to update job status to :in-memory or :in-disk when removed from CPU, persist results.
-
-3.
-Look at profiling and timing methods.
-- Where to store?
--- In PCB seems rather obvious, or in another hashtable that takes job-ids as keys.
-- What's in a job-profile object?
--- IO ops (load/stores), Time in waiting queue and Total Completion Time as a bare minimum.
-- How to profile?
--- See if the output from time can be redirected. If not, write a record-runtime macro or similar.
+Test profiling.
+Finish kernel.
 
 4. *Very Low Priority, Speculative*
 Ensure correctness of MOV.
