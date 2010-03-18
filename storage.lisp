@@ -26,6 +26,7 @@
 (defmethod memory-read ((device storage-device) index)
   (aref (slot-value device 'storage) index))
 
+;; NOTE: Only the CPU should write to memory.
 (defmethod memory-write ((device storage-device) index value)
   (setf (aref (slot-value device 'storage) index) value))
 
@@ -34,6 +35,17 @@
 
 (defmethod memory-index ((device storage-device))
   (fill-pointer (slot-value device 'storage)))
+
+(defmethod memory-free ((device storage-device))
+  (with-slots (storage) device
+    (- (array-total-size storage)
+       (length storage))))
+
+(defmethod memory-reset ((device storage-device))
+  (with-slots (storage) device
+    (setf storage
+	  (make-array (array-total-size storage)
+		      :fill-pointer 0 :element-type 'machine-word))))
 
 ;; Process state object to be stored in the PCB.
 (defclass process-state ()
