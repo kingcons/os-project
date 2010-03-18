@@ -9,6 +9,5 @@
 
 (defun os-driver () ; or main/kernel
   (init)
-  (loop repeat
-	(fetch *cpu1*)
+  (loop (fetch *cpu1*)
 	(decode *cpu1*)))
