@@ -22,7 +22,10 @@
     :accessor breg)
    (ins-register
     :initform 0
-    :accessor ireg)))
+    :accessor ireg)
+   (running-job
+    :initform nil
+    :accessor job-id)))
 
 (defvar *cpu1* (make-instance 'cpu))
 

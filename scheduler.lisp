@@ -40,11 +40,12 @@
 	 (job (gethash job-id *pcb*)))
     (when nil ; *context-switch-p*
       (context-switch))
-    (dispatcher job cpu)))
+    (dispatcher job job-id cpu)))
 
-(defun dispatcher (job cpu)
+(defun dispatcher (job job-id cpu)
   (registers-clear cpu)
   (setf (breg cpu) (start-ram job)
 	(pc cpu) 0
 	(ireg cpu) 0)
-  (setf (status job) :running))
+  (setf (status job) :running)
+  (setf (job-id cpu) job-id))
