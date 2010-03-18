@@ -9,4 +9,6 @@
 	       (:file "scheduler")
 	       (:file "cpu")
 	       (:file "disassembler")
+	       (:file "profiling")
+	       (:file "kernel")
 	       ))

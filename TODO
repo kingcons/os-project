@@ -2,6 +2,7 @@
 From highest priority to lowest...
 
 2.
+Profiling still does nothing when enabled, finish it.
 Test decode and fetch on job 1.
 Test profiling.
 Test scheduler changes.
