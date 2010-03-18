@@ -12,7 +12,7 @@ Look at profiling and timing methods.
 - Where to store?
 -- In PCB seems rather obvious, or in another hashtable that takes job-ids as keys.
 - What's in a job-profile object?
--- IO ops (load/stores), Time in waiting queue and  Total Completion Time as a bare minimum.
+-- IO ops (load/stores), Time in waiting queue and Total Completion Time as a bare minimum.
 - How to profile?
 -- See if the output from time can be redirected. If not, write a record-runtime macro or similar.
 
