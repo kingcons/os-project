@@ -3,11 +3,9 @@ From highest priority to lowest...
 
 2.
 Test decode and fetch on job 1.
-When all jobs are finished, clear RAM and unless *job-order* is nil invoke LTS. Back to work CPU.
-Ensure jobs transition and CPU eventaully halts.
-Make sure to update job status to :in-memory or :in-disk when removed from CPU, persist results.
 Test profiling.
-Finish kernel.
+Test scheduler changes.
+Test kernel.
 
 4. *Very Low Priority, Speculative*
 Ensure correctness of MOV.
