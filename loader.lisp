@@ -10,7 +10,8 @@
   (with-open-file (input filepath)
     (loop for line = (read-line input nil) while line do
       (parse-line line)))
-  (format t "All jobs in file ~a loaded.~%" filepath))
+  (format t "All jobs in file ~a loaded.~%" filepath)
+  (setf *current-job* nil))
 
 (defun read-hex-from-string (string)
   (parse-integer string :radix 16))

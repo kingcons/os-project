@@ -65,7 +65,16 @@
    (data-count :accessor data-count)
    (data-buffer :accessor data-buffer)
    (scratchpad :accessor scratchpad)
-   (status :accessor status)))
+   (status :accessor status)
+   (profile-io
+    :initform 0
+    :accessor profile-io)
+   (profile-waiting 
+    :initform 0
+    :accessor profile-waiting)
+   (profile-completion
+    :initform 0
+    :accessor profile-completion)))
 
 (defun clear-all-data ()
   (setf *pcb* (make-hash-table :test #'equal))
