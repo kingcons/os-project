@@ -143,7 +143,7 @@
 	     (register-write cpu reg3 1)
 	     (register-write cpu reg3 0)))
       (#x12 ; HLT
-	 nil)
+	 (short-scheduler cpu))
       (#x13 ; NOP, never used in provided asm
 	 nil)
       (#x14 ; JMP, never used in provided asm

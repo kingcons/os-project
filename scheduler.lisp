@@ -50,7 +50,13 @@
 	 (job (gethash job-id *pcb*)))
 ;    (when nil ; *context-switch-p*?
 ;      (context-switch))
-    (dispatcher job job-id cpu)))
+    (when (job-id cpu)
+      (move-job (gethash (job-id cpu) *pcb*) :type :save))
+    (if job-id
+	(dispatcher job job-id cpu)
+	(progn
+	  (memory-reset *memory*)
+	  (long-scheduler)))))
 
 (defun dispatcher (job job-id cpu)
   (registers-clear cpu)
