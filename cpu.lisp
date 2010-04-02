@@ -48,28 +48,55 @@
 		    (memory-read *memory* (+ (breg cpu) (pc cpu)))))
   (incf (pc cpu)))
 
-(defmethod decode ((cpu cpu))
-  (let* ((instruction (ireg cpu))
-	 (ins-type (ldb (byte 2 30) instruction))
-	 (opcode (ldb (byte 6 24) instruction))
-	 (reg1 0) (reg2 0) (reg3 0))
+(defun parse-instruction (instruction &key (string-p nil) (ins-data nil))
+  (let* ((ins (if string-p
+		  (read-hex-from-string instruction)
+		  instruction))
+	 (ins-type (ldb (byte 2 30) ins))
+	 (opcode (ldb (byte 6 24) ins))
+	 (reg1 0) (reg2 0) (reg3 0)
+	 (hexstr (when string-p (format nil "0x~8a: " instruction))))
     (flet ((bit-range (width position)
-	     (ldb (byte width position) instruction)))
+	     (ldb (byte width position) ins)))
       (ecase ins-type
 	(#b00
 	   (setf reg1 (bit-range 4 20))
 	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 4 12)))
+	   (setf reg3 (bit-range 4 12))
+	   (when ins-data
+	     (setf ins-data (format nil "Arithmetic         IF: s-reg s-reg d-reg, ~2a ~2a ~2a"
+				    4 4 4))))
 	(#b01
 	   (setf reg1 (bit-range 4 20))
 	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0)))
+	   (setf reg3 (bit-range 16 0))
+	   (when ins-data
+	     (setf ins-data (format nil "Cond and Immediate IF: b-reg d-reg addr, ~2a ~2a ~2a"
+				    4 4 16))))
 	(#b10
-	   (setf reg1 (bit-range 24 0)))
+	   (setf reg1 (bit-range 24 0))
+	   (when ins-data
+	     (setf ins-data (format nil "Unconditional Jump IF: addr, ~2a" 24))))
 	(#b11
 	   (setf reg1 (bit-range 4 20))
 	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0)))))
+	   (setf reg3 (bit-range 16 0))
+	   (when ins-data
+	     (setf ins-data (format nil "Input and Output   IF: reg1 reg2 addr, ~2a ~2a ~2a"
+				    4 4 16))))))
+    (list opcode reg1 reg2 reg3 ins-data hexstr ins-type)))
+
+	 ;; WHERE DOES OPCODES BELONG?
+;	 (opcodes #("rd" "wr" "st" "lw" "mov" "add" "sub" "mul" "div" "and"
+;		    "or" "movi" "addi" "muli" "divi" "ldi" "slt" "slti"
+;		    "hlt" "nop" "jmp" "beq" "bneq" "bez" "bnz" "bgz" "blz")))
+
+(defmethod decode ((cpu cpu))
+  (let* ((parsed-ins (parse-instruction (ireg cpu)))
+	 (opcode (first parsed-ins))
+	 (reg1 (second parsed-ins))
+	 (reg2 (third parsed-ins))
+	 (reg3 (fourth parsed-ins)))
     (ecase opcode
       ;; I can't think of a good way to split out execution from decode.
       ;; Finally, some macros to tidy this up might be nice.
@@ -147,7 +174,8 @@
       (#x13 ; NOP, never used in provided asm
 	 nil)
       (#x14 ; JMP, never used in provided asm
-	 ())
+	 ()) ;; TODO: should reset PC and set breg to 0, resetting breg after the next fetch
+      ;; Better idea: Use a kwarg to bypass breg...on the next fetch.
       (#x15 ; BEQ
 	 (when (= (register-read cpu reg1)
 		  (register-read cpu reg2))

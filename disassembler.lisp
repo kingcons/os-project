@@ -16,39 +16,17 @@
 	       (pretty-print-asm hex-string :raw t)))))))
   
 (defun pretty-print-asm (hex-str &key (raw nil) (ins-data nil) (op-data nil) (job-id nil))
-  (let* ((ins (read-hex-from-string hex-str))
-	 (ins-type (ldb (byte 2 30) ins))
-	 (opcode (ldb (byte 6 24) ins))
-	 (reg1 0) (reg2 0) (reg3 0)
-	 (hexstr (format nil "0x~8a: " hex-str))
+  (let* ((parsed-ins (parse-instruction hex-str :string-p t :ins-data ins-data))
+	 (opcode (first parsed-ins))
+	 (reg1 (second parsed-ins))
+	 (reg2 (third parsed-ins))
+	 (reg3 (fourth parsed-ins))
+	 (ins-data (fifth parsed-ins))
+	 (hexstr (sixth parsed-ins))
+	 (ins-type (seventh parsed-ins))
 	 (opcodes #("rd" "wr" "st" "lw" "mov" "add" "sub" "mul" "div" "and"
 		    "or" "movi" "addi" "muli" "divi" "ldi" "slt" "slti"
 		    "hlt" "nop" "jmp" "beq" "bneq" "bez" "bnz" "bgz" "blz")))
-    (flet ((bit-range (width position)
-	     (ldb (byte width position) ins)))
-      (ecase ins-type
-	(#b00
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 4 12))
-	   (when ins-data
-	     (setf ins-data (format nil "Arithmetic         IF: s-reg s-reg d-reg, ~2a ~2a ~2a" 4 4 4))))
-	(#b01
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0))
-	   (when ins-data
-	     (setf ins-data (format nil "Cond and Immediate IF: b-reg d-reg addr, ~2a ~2a ~2a" 4 4 16))))
-	(#b10
-	   (setf reg1 (bit-range 24 0))
-	   (when ins-data
-	     (setf ins-data (format nil "Unconditional Jump IF: addr, ~2a" 24))))
-	(#b11
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0))
-	   (when ins-data
-	     (setf ins-data (format nil "Input and Output   IF: reg1 reg2 addr, ~2a ~2a ~2a" 4 4 16))))))
     (when op-data
       (ecase opcode
 	(#x00 (setf op-data "Type: I/O. Reads contents of Input buffer into the Accumulator"))
