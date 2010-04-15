@@ -99,19 +99,19 @@
 	 (register-write cpu reg1
 			 (read-hex-from-string
 			  (memory-read *memory*
-				       (address cpu (if (zerop reg2)
-							reg3
-							(register-read cpu reg2)))))))
+				       (if (zerop reg2)
+					   (address cpu reg3)
+					   (register-read cpu reg2))))))
       (#x01 ; WR
 	 (memory-write *memory*
 		       (address cpu (if (zerop reg2)
 					reg3
 					(register-read cpu reg2)))
-		       (register-read cpu reg1)))
+		       (to-hex-string (register-read cpu reg1))))
       (#x02 ; ST
 	 (memory-write *memory*
 		       (address cpu (register-read cpu reg2))
-		       (register-read cpu reg1)))
+		       (to-hex-string (register-read cpu reg1))))
       (#x03 ; LW
 	 (register-write cpu reg2
 			 (read-hex-from-string
@@ -152,7 +152,7 @@
       (#x0e ; DIVI, never used in provided asm
 	 (register-write cpu reg2 (/ reg3 (register-read cpu reg2))))
       (#x0f ; LDI
-	 (register-write cpu reg2 (address cpu reg3)))
+	 (register-write cpu reg2 reg3))
       (#x10 ; SLT
 	 (if (< (register-read cpu reg1)
 		(register-read cpu reg2))
