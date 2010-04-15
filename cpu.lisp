@@ -116,7 +116,7 @@
 	 (register-write cpu arg2
 			 (read-hex-from-string
 			  (memory-read *memory*
-				       (register-read cpu arg1)))))
+				       (address cpu (register-read cpu arg1))))))
       (#x04 ; MOV, INCOMPLETE, see peculiar use case in Job 7
 	 (register-write cpu arg1 (register-read cpu arg2)))
       (#x05 ; ADD
