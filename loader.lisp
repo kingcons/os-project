@@ -16,8 +16,8 @@
   (parse-integer string :radix 16))
 
 (defun to-hex-string (integer)
-  (write-to-string integer :base 16))
-;  (format nil "~X" integer))
+  (format nil "~8,'0X" integer))
+;  (write-to-string integer :base 16)
 
 (defun parse-line (line)
   (cond ((and (> (length line) 1)

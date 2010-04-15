@@ -54,142 +54,142 @@
 		  instruction))
 	 (ins-type (ldb (byte 2 30) ins))
 	 (opcode (ldb (byte 6 24) ins))
-	 (reg1 0) (reg2 0) (reg3 0)
+	 (arg1 0) (arg2 0) (arg3 0)
 	 (hexstr (when string-p (format nil "0x~8a: " instruction))))
     (flet ((bit-range (width position)
 	     (ldb (byte width position) ins)))
       (ecase ins-type
 	(#b00
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 4 12))
+	   (setf arg1 (bit-range 4 20))
+	   (setf arg2 (bit-range 4 16))
+	   (setf arg3 (bit-range 4 12))
 	   (when ins-data
 	     (setf ins-data (format nil "Arithmetic         IF: s-reg s-reg d-reg, ~2a ~2a ~2a"
 				    4 4 4))))
 	(#b01
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0))
+	   (setf arg1 (bit-range 4 20))
+	   (setf arg2 (bit-range 4 16))
+	   (setf arg3 (bit-range 16 0))
 	   (when ins-data
 	     (setf ins-data (format nil "Cond and Immediate IF: b-reg d-reg addr, ~2a ~2a ~2a"
 				    4 4 16))))
 	(#b10
-	   (setf reg1 (bit-range 24 0))
+	   (setf arg1 (bit-range 24 0))
 	   (when ins-data
 	     (setf ins-data (format nil "Unconditional Jump IF: addr, ~2a" 24))))
 	(#b11
-	   (setf reg1 (bit-range 4 20))
-	   (setf reg2 (bit-range 4 16))
-	   (setf reg3 (bit-range 16 0))
+	   (setf arg1 (bit-range 4 20))
+	   (setf arg2 (bit-range 4 16))
+	   (setf arg3 (bit-range 16 0))
 	   (when ins-data
 	     (setf ins-data (format nil "Input and Output   IF: reg1 reg2 addr, ~2a ~2a ~2a"
 				    4 4 16))))))
-    (list opcode reg1 reg2 reg3 ins-data hexstr ins-type)))
+    (list opcode arg1 arg2 arg3 ins-data hexstr ins-type)))
 
 (defmethod decode ((cpu cpu))
   (let* ((parsed-ins (parse-instruction (ireg cpu)))
 	 (opcode (first parsed-ins))
-	 (reg1 (second parsed-ins))
-	 (reg2 (third parsed-ins))
-	 (reg3 (fourth parsed-ins)))
+	 (arg1 (second parsed-ins))
+	 (arg2 (third parsed-ins))
+	 (arg3 (fourth parsed-ins)))
     (ecase opcode
       ;; I can't think of a good way to split out execution from decode.
       ;; Finally, some macros to tidy this up might be nice.
       (#x00 ; RD
-	 (register-write cpu reg1
+	 (register-write cpu arg1
 			 (read-hex-from-string
 			  (memory-read *memory*
-				       (if (zerop reg2)
-					   (address cpu reg3)
-					   (register-read cpu reg2))))))
+				       (address cpu (if (zerop arg2)
+							arg3
+							(register-read cpu arg2)))))))
       (#x01 ; WR
 	 (memory-write *memory*
-		       (if (zerop reg2)
-			   (address cpu reg3)
-			   (register-read cpu reg2))
-		       (to-hex-string (register-read cpu reg1))))
+		       (if (zerop arg2)
+			   (address cpu arg3)
+			   (register-read cpu arg2))
+		       (to-hex-string (register-read cpu arg1))))
       (#x02 ; ST
 	 (memory-write *memory*
-		       (address cpu (register-read cpu reg2))
-		       (to-hex-string (register-read cpu reg1))))
+		       (address cpu (register-read cpu arg2))
+		       (to-hex-string (register-read cpu arg1))))
       (#x03 ; LW
-	 (register-write cpu reg2
+	 (register-write cpu arg2
 			 (read-hex-from-string
 			  (memory-read *memory*
-				       (register-read cpu reg1)))))
+				       (register-read cpu arg1)))))
       (#x04 ; MOV, INCOMPLETE, see peculiar use case in Job 7
-	 (register-write cpu reg1 (register-read cpu reg2)))
+	 (register-write cpu arg1 (register-read cpu arg2)))
       (#x05 ; ADD
-	 (register-write cpu reg3
-			 (+ (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (+ (register-read cpu arg1)
+			    (register-read cpu arg2))))
       (#x06 ; SUB, never used in provided asm
-	 (register-write cpu reg3
-			 (- (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (- (register-read cpu arg1)
+			    (register-read cpu arg2))))
       (#x07 ; MUL, never used in provided asm
-	 (register-write cpu reg3
-			 (* (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (* (register-read cpu arg1)
+			    (register-read cpu arg2))))
       (#x08 ; DIV
-	 (register-write cpu reg3
-			 (/ (register-read cpu reg1)
-			    (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (/ (register-read cpu arg1)
+			    (register-read cpu arg2))))
       (#x09 ; AND, never used in provided asm
-	 (register-write cpu reg3
-			 (logand (register-read cpu reg1)
-				 (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (logand (register-read cpu arg1)
+				 (register-read cpu arg2))))
       (#x0a ; OR, never used in provided asm
-	 (register-write cpu reg3
-			 (logior (register-read cpu reg1)
-				 (register-read cpu reg2))))
+	 (register-write cpu arg3
+			 (logior (register-read cpu arg1)
+				 (register-read cpu arg2))))
       (#x0b ; MOVI
-	 (register-write cpu reg2 reg3))
+	 (register-write cpu arg2 arg3))
       (#x0c ; ADDI
-	 (register-write cpu reg2 (+ reg3 (register-read cpu reg2))))
+	 (register-write cpu arg2 (+ arg3 (register-read cpu arg2))))
       (#x0d ; MULI, never used in provided asm
-	 (register-write cpu reg2 (* reg3 (register-read cpu reg2))))
+	 (register-write cpu arg2 (* arg3 (register-read cpu arg2))))
       (#x0e ; DIVI, never used in provided asm
-	 (register-write cpu reg2 (/ reg3 (register-read cpu reg2))))
+	 (register-write cpu arg2 (/ arg3 (register-read cpu arg2))))
       (#x0f ; LDI
-	 (register-write cpu reg2 reg3))
+	 (register-write cpu arg2 arg3))
       (#x10 ; SLT
-	 (if (< (register-read cpu reg1)
-		(register-read cpu reg2))
-	     (register-write cpu reg3 1)
-	     (register-write cpu reg3 0)))
+	 (if (< (register-read cpu arg1)
+		(register-read cpu arg2))
+	     (register-write cpu arg3 1)
+	     (register-write cpu arg3 0)))
       (#x11 ; SLTI, never used in provided asm
-	 (if (< (register-read cpu reg1) reg2)
-	     (register-write cpu reg3 1)
-	     (register-write cpu reg3 0)))
+	 (if (< (register-read cpu arg1) arg2)
+	     (register-write cpu arg3 1)
+	     (register-write cpu arg3 0)))
       (#x12 ; HLT
 	 (short-scheduler cpu))
       (#x13 ; NOP, never used in provided asm
 	 nil)
       (#x14 ; JMP, never used in provided asm
-	 ()) ;; TODO: should reset PC and set breg to 0,
-             ;; resetting breg after the next fetch
-      ;; Better idea: Use a kwarg to bypass breg...on the next fetch.
+	 ()) ;; TODO: should reset PC and set barg to 0,
+             ;; resetting barg after the next fetch
+      ;; Better idea: Use a kwarg to bypass barg...on the next fetch.
       (#x15 ; BEQ
-	 (when (= (register-read cpu reg1)
-		  (register-read cpu reg2))
-	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+	 (when (= (register-read cpu arg1)
+		  (register-read cpu arg2))
+	   (setf (pc cpu) (address cpu arg3 :with-base nil))))
       (#x16 ; BNEQ
-	 (unless (= (register-read cpu reg1)
-		    (register-read cpu reg2))
-	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+	 (unless (= (register-read cpu arg1)
+		    (register-read cpu arg2))
+	   (setf (pc cpu) (address cpu arg3 :with-base nil))))
       (#x17 ; BEZ, never used in provided asm
-	 (when (zerop (register-read cpu reg2))
-	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+	 (when (zerop (register-read cpu arg2))
+	   (setf (pc cpu) (address cpu arg3 :with-base nil))))
       (#x18 ; BNZ, never used in provided asm
-	 (unless (zerop (register-read cpu reg1))
-	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+	 (unless (zerop (register-read cpu arg1))
+	   (setf (pc cpu) (address cpu arg3 :with-base nil))))
       (#x19 ; BGZ, never used in provided asm
-	 (when (> (register-read cpu reg1) 0)
-	   (setf (pc cpu) (address cpu reg3 :with-base nil))))
+	 (when (> (register-read cpu arg1) 0)
+	   (setf (pc cpu) (address cpu arg3 :with-base nil))))
       (#x1a ; BLZ, never used in provided asm
-	 (when (< (register-read cpu reg1) 0)
-	   (setf (pc cpu) (address cpu reg3 :with-base nil)))))))
+	 (when (< (register-read cpu arg1) 0)
+	   (setf (pc cpu) (address cpu arg3 :with-base nil)))))))
 
 (defun reset ()
   (clear-all-data)
