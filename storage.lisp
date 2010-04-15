@@ -5,7 +5,7 @@
   '(simple-array character (8)))
 
 ;; Process Control Block, a process metadata store
-(defvar *pcb* (make-hash-table :test #'equal))
+(defvar *pcb* (make-hash-table))
 
 ;; Storage abstraction for memory/disk management
 (defclass storage-device ()
@@ -68,6 +68,7 @@
    (data-buffer :accessor data-buffer)
    (scratchpad :accessor scratchpad)
    (status :accessor status)
+   (identical-jobs :accessor identical-jobs :initform '())
    (profile-io
     :initform 0
     :accessor profile-io)

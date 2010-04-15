@@ -9,7 +9,8 @@
     (loop for line = (read-line input nil) while line do
       (parse-line line)))
   (format t "All jobs in file ~a loaded.~%" filepath)
-  (setf *current-job* nil))
+  (setf *current-job* nil)
+  (find-identical-jobs))
 
 (defun read-hex-from-string (string)
   (parse-integer string :radix 16))
@@ -62,3 +63,22 @@
 (defun parse-data (hex-line)
   (let ((line (subseq hex-line 2 10)))
     (memory-push-end *disk* line)))
+
+(defun find-identical-jobs ()
+  (let ((jobs (loop for i from 1 to 30 collecting i)))
+    (flet ((instructs-equal (ins-count start1 start2)
+	     (loop for idx from 0 to (1- ins-count)
+		   always (string= (memory-read *disk* (+ start1 idx))
+				   (memory-read *disk* (+ start2 idx))))))
+      (loop for i in jobs do
+	(let* ((job (gethash i *pcb*))
+	       (count (ins-count job))
+	       (start (start-disk job))
+	       (idents (identical-jobs job)))
+	  (loop for j in (remove i jobs) do
+	    (let* ((job2 (gethash j *pcb*))
+		   (count2 (ins-count job2))
+		   (start2 (start-disk job2)))
+	      (when (and (= count count2)
+			 (instructs-equal count start start2))
+		(setf (identical-jobs job) (push j idents))))))))))
