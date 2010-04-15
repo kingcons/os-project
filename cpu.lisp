@@ -152,9 +152,7 @@
       (#x0e ; DIVI, never used in provided asm
 	 (register-write cpu reg2 (/ reg3 (register-read cpu reg2))))
       (#x0f ; LDI
-	 (register-write cpu reg2
-			 (read-hex-from-string
-			  (memory-read *memory* (address cpu reg3)))))
+	 (register-write cpu reg2 (address cpu reg3)))
       (#x10 ; SLT
 	 (if (< (register-read cpu reg1)
 		(register-read cpu reg2))
