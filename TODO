@@ -2,6 +2,9 @@
 From highest priority to lowest...
 
 2.
+Switch #'> to #'< in order-jobs in init. Shortest job first and all that.
+Read the assembly for a few jobs. Figure out intended behavior.
+Ensure decoder faithfully implements said behavior. *sigh* What I wouldn't give for good docs.
 Profiling still does nothing when enabled, finish it.
 Test decode and fetch on job 1.
 Test profiling.
@@ -16,14 +19,10 @@ Ensure correctness of MOV.
 Long Term/Fun:
 Just make the code ungross.
 Work on style, eliminate hacks, improve readability+formatting, etc.
--- Abstract things where possible. Use macros where necessary/sane.
+-- Abstract things where possible. Use macros (read macros) where necessary/sane.
 --- Potential targets:
----- Abstract out differences between pretty-print-asm and decode.
------- The bulk of pretty-print-asm should be reduced to
--------- (decode opcode :raw t :ins-data t :op-data t) and format on that.
 ---- Cpu.lisp is easily the ugliest code in the whole project.
 ----- Decode in particular is 120 lines of raw madness. Refactor, rewrite, sanify.
----- Unify load-job and unload-job. That is totally one function waiting to happen.
 
 **Justin's TODO
 
