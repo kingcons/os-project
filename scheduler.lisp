@@ -1,16 +1,11 @@
 (in-package :os-project)
 
-;; just a collection of job ids, phase 1's long term scheduling will
-;; just be FIFO
 (defparameter *ready-queue* (make-instance 'cl-heap:priority-queue))
-
 (defvar *job-order* nil)
 
 (defun job-total-space (job)
-  (+ (ins-count job)
-     (data-buffer job)
-     (data-count job)
-     (scratchpad job)))
+  (with-slots (ins-count data-buffer data-count scratchpad) job
+    (+ ins-count data-buffer data-count scratchpad)))
 
 (defun order-jobs (&key (policy nil) (comparison nil))
   (sort (loop for job-id being the hash-keys in *pcb*

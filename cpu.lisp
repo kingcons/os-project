@@ -86,11 +86,6 @@
 				    4 4 16))))))
     (list opcode reg1 reg2 reg3 ins-data hexstr ins-type)))
 
-	 ;; WHERE DOES OPCODES BELONG?
-;	 (opcodes #("rd" "wr" "st" "lw" "mov" "add" "sub" "mul" "div" "and"
-;		    "or" "movi" "addi" "muli" "divi" "ldi" "slt" "slti"
-;		    "hlt" "nop" "jmp" "beq" "bneq" "bez" "bnz" "bgz" "blz")))
-
 (defmethod decode ((cpu cpu))
   (let* ((parsed-ins (parse-instruction (ireg cpu)))
 	 (opcode (first parsed-ins))
@@ -174,7 +169,8 @@
       (#x13 ; NOP, never used in provided asm
 	 nil)
       (#x14 ; JMP, never used in provided asm
-	 ()) ;; TODO: should reset PC and set breg to 0, resetting breg after the next fetch
+	 ()) ;; TODO: should reset PC and set breg to 0,
+             ;; resetting breg after the next fetch
       ;; Better idea: Use a kwarg to bypass breg...on the next fetch.
       (#x15 ; BEQ
 	 (when (= (register-read cpu reg1)

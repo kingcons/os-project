@@ -2,8 +2,6 @@
 
 (defvar *data1* "DataFile1.txt")
 (defvar *data2* "DataFile2.txt")
-
-;; Maybe use a special var here?
 (defvar *current-job* nil)
 
 (defun loader (filepath)
@@ -44,16 +42,22 @@
   (cond ((eql type :job)
 	 (setf (gethash (read-hex-from-string (third metadata)) *pcb*)
 	       (make-instance 'process-state
-			      :ins-count (read-hex-from-string (fourth metadata))
-			      :priority (read-hex-from-string (fifth metadata))
-			      ; Assumes order on disk doesn't change and disk is only loaded once.
+			      :ins-count (read-hex-from-string
+					  (fourth metadata))
+			      :priority (read-hex-from-string
+					 (fifth metadata))
+			      ; Assumes order on disk doesn't change
+			      ; and disk is only loaded once.
 			      :start-disk (memory-index *disk*))))
 	((eql type :data)
 	 (let ((process-state (gethash *current-job* *pcb*)))
-	   (setf (data-count process-state) (read-hex-from-string (third metadata))
-		 (data-buffer process-state) (read-hex-from-string (fourth metadata))
-		 (scratchpad process-state) (read-hex-from-string (fifth metadata)))))
-	 (t (format t "Something has gone quite wrong. We're embarassed.~%"))))
+	   (setf (data-count process-state) (read-hex-from-string
+					     (third metadata))
+		 (data-buffer process-state) (read-hex-from-string
+					      (fourth metadata))
+		 (scratchpad process-state) (read-hex-from-string
+					     (fifth metadata)))))
+	 (t (format t "Something is quite wrong. We're embarassed.~%"))))
 
 (defun parse-data (hex-line)
   (let ((line (subseq hex-line 2 10)))

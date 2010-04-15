@@ -1,6 +1,6 @@
 (in-package :os-project)
 
-;Policy options: #'job-total-space, #'ins-count, #'data-count, #'priority  
+;Policy options: #'job-total-space, #'ins-count, #'data-count, #'priority
 (defun init ()
   (loader *data2*)
   (setf *job-order* (order-jobs :policy #'ins-count :comparison #'>))
@@ -25,3 +25,7 @@
        (untrace memory-read memory-write
 		register-read register-write
 		fetch decode))))
+
+(defun reset ()
+  (clear-all-data)
+  (setf *cpu1* (make-instance 'cpu)))
