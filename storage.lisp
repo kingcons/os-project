@@ -80,6 +80,6 @@
     :accessor profile-completion)))
 
 (defun clear-all-data ()
-  (setf *pcb* (make-hash-table :test #'equal))
+  (setf *pcb* (make-hash-table :test #'eql))
   (setf *memory* (make-instance 'storage-device :size 1024))
   (setf *disk* (make-instance 'storage-device :size 2048)))

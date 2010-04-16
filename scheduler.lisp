@@ -15,6 +15,8 @@
 
 (defun long-scheduler ()
   (let ((priority 1))
+    (unless *job-order*
+      (throw 'no-more-jobs nil))
     (loop for job-id = (car (pop *job-order*)) while job-id
 	  for job = (gethash job-id *pcb*)
 	  until (> (job-total-space job) (memory-free *memory*))
@@ -47,12 +49,14 @@
 ;    (when nil ; *context-switch-p*?
 ;      (context-switch))
     (when (job-id cpu)
-      (move-job (gethash (job-id cpu) *pcb*) :type :save))
+      (move-job (gethash (job-id cpu) *pcb*) :type :save)
+      (setf (job-id cpu) nil))
     (if job-id
 	(dispatcher job job-id cpu)
 	(progn
 	  (memory-reset *memory*)
-	  (long-scheduler)))))
+	  (long-scheduler)
+	  (short-scheduler cpu)))))
 
 (defun dispatcher (job job-id cpu)
   (registers-clear cpu)
