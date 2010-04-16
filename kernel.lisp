@@ -8,8 +8,9 @@
   (short-scheduler *cpu1*))
 
 (defun kernel ()
-  (loop (fetch *cpu1*)
-	(decode *cpu1*)))
+  (catch 'no-more-jobs
+    (loop (fetch *cpu1*)
+	  (decode *cpu1*))))
 
 (defun os-driver ()
   (init)
@@ -28,4 +29,5 @@
 
 (defun reset ()
   (clear-all-data)
+  (setf *ready-queue* (make-instance 'cl-heap:priority-queue))
   (setf *cpu1* (make-instance 'cpu)))
