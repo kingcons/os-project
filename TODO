@@ -2,11 +2,9 @@
 From highest priority to lowest...
 
 1.
-A current MOD bug seems to be caused by job 7. Job 7 unloads and sets its start-ram to -1 and then reloads somehow setting the breg to -1. Try to fetch on that and boom.
-Job 3 executes but we round the eventual result rather than storing the float average. Is this correct?
+Job 3 executes but we round the eventual result rather than storing the float average. Is this okay?
 Profiling still does nothing when enabled, finish it.
 Test profiling.
-Test kernel.
 2.
 Get multiple CPUs running and ensure that the concurrency issues are worked out with the ready-queue, memory, disk and pcb. Other places?
 3.
