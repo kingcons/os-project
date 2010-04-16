@@ -2,7 +2,6 @@
 From highest priority to lowest...
 
 2.
-Switch #'> to #'< in order-jobs in init. Shortest job first and all that.
 Read the assembly for a few jobs. Figure out intended behavior.
 Ensure decoder faithfully implements said behavior. *sigh* What I wouldn't give for good docs.
 Profiling still does nothing when enabled, finish it.

@@ -3,7 +3,7 @@
 ;Policy options: #'job-total-space, #'ins-count, #'data-count, #'priority
 (defun init ()
   (loader *data2*)
-  (setf *job-order* (order-jobs :policy #'ins-count :comparison #'>))
+  (setf *job-order* (order-jobs :policy #'ins-count :comparison #'<))
   (long-scheduler)
   (short-scheduler *cpu1*))
 

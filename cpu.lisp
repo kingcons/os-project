@@ -104,9 +104,9 @@
 							(register-read cpu arg2)))))))
       (#x01 ; WR
 	 (memory-write *memory*
-		       (if (zerop arg2)
-			   (address cpu arg3)
-			   (register-read cpu arg2))
+		       (address cpu (if (zerop arg2)
+					arg3
+					(register-read cpu arg2)))
 		       (to-hex-string (register-read cpu arg1))))
       (#x02 ; ST
 	 (memory-write *memory*

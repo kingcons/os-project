@@ -1,0 +1,141 @@
+Many of the assembly arguments are byte addressed.
+You can recognize this from the various usages of the instruction and its arguments.
+For example, the arg3 of the rd instruction, if it is used (non-zero) is byte-addressed.
+If an instruction argument is greater than 16 (the number of registers of our cpu),
+it is almost certainly a byte-address.
+To figure out the memory location of such an address, simply divide by four.
+
+Job 1:
+What:
+How:
+Disassembly...
+Ins-#/Hex       instr  arg1 arg2 arg3 // comments
+01/0xC050005C:  rd     5    0    92  
+02/0x4B060000:  movi   0    6    0   
+03/0x4B010000:  movi   0    1    0   
+04/0x4B000000:  movi   0    0    0   
+05/0x4F0A005C:  ldi    0    10   92  
+06/0x4F0D00DC:  ldi    0    13   220 
+07/0x4C0A0004:  addi   0    10   4   
+08/0xC0BA0000:  rd     11   10   0   
+09/0x42BD0000:  st     11   13   0   
+0A/0x4C0D0004:  addi   0    13   4   
+0B/0x4C060001:  addi   0    6    1   
+0C/0x10658000:  slt    6    5    8   
+0D/0x56810018:  bneq   8    1    24  
+0E/0x4B060000:  movi   0    6    0   
+0F/0x4F0900DC:  ldi    0    9    220 
+10/0x43970000:  lw     9    7    0   
+11/0x05070000:  add    0    7    0   
+12/0x4C060001:  addi   0    6    1   
+13/0x4C090004:  addi   0    9    4   
+14/0x10658000:  slt    6    5    8   
+15/0x5681003C:  bneq   8    1    60  
+16/0xC10000AC:  wr     0    0    172 
+17/0x92000000:  hlt    0    0    0   
+
+Job 2:
+What: Finds the largest number in its input.
+How:
+* First it sets a number of variables to zero and reads the number of input data from address 112.
+* Then it loops through the input buffer copying each variable to the temp buffer.
+* It sets the accumulator to the first variable in the temp buffer.
+* Then it loops through the temp buffer comparing each variable to the accumulator.
+* If a variable is larger than the accumulator, the accumulator is set to that variable.
+* Lastly, the accumulator is written back to memory.
+Disassembly...
+Ins-#/Hex       instr  arg1 arg2 arg3 // comments
+01/0xC0500070:  rd     5    0    112  // store the data at address 112 (the input buffer) in reg 5
+02/0x4B060000:  movi   0    6    0    // set reg 6 to 0, it will act as a loop counter
+03/0x4B010000:  movi   0    1    0    // set reg 1 (the zero register) to 0
+04/0x4B000000:  movi   0    0    0    // set reg 0 (the accumulator register) to 0
+05/0x4F0A0070:  ldi    0    10   112  // store the address 112 (the input buffer) in reg 10
+06/0x4F0D00F0:  ldi    0    13   240  // store the address 240 (the temp buffer) in reg 13
+07/0x4C0A0004:  addi   0    10   4    // add 4 to reg 10 (increment the input buffer index)
+08/0xC0BA0000:  rd     11   10   0    // store the data at the address in reg 10 in reg 11
+09/0x42BD0000:  st     11   13   0    // store the data in reg 11 at the address in reg 13
+0A/0x4C0D0004:  addi   0    13   4    // add 4 to reg 13 (increment the temp buffer index)
+0B/0x4C060001:  addi   0    6    1    // increment the loop counter
+0C/0x10658000:  slt    6    5    8    // if reg 6 is less than reg 5 we haven't loaded all the input
+		       	    	      // so set reg 8 to 1, set it to 0 otherwise
+0D/0x56810018:  bneq   8    1    24   // if reg 8 doesn't equal reg 1 (zero),
+		       	    	      // branch/goto the address in arg3 (instruction 06)
+0E/0x4B060000:  movi   0    6    0    // set reg 6 to 0 again (resetting our loop counter)
+0F/0x4F0900F0:  ldi    0    9    240  // store the address 240 (the temp buffer) in reg 9
+10/0x43900000:  lw     9    0    0    // load the contents of reg 9 into reg 0 (the accumulator)
+11/0x4C060001:  addi   0    6    1    // increment reg 6 (our loop counter)
+12/0x4C090004:  addi   0    9    4    // add 4 to reg 9 (increment the temp buffer index)
+13/0x43920000:  lw     9    2    0    // load the contents of reg 9 into reg 2
+14/0x4C060001:  addi   0    6    1    // increment reg 6 (our loop counter)
+15/0x4C090004:  addi   0    9    4    // add 4 to reg 9 (increment the temp buffer index)
+16/0x10028000:  slt    0    2    8    // if reg 0 is less than reg 2 then reg 2 is a larger number
+		       	    	      // so set reg 8 to 1, set it to 0 otherwise
+17/0x55810060:  beq    8    1    96   // if reg 8 equals reg 1 (zero),
+		       	    	      // branch/goto the address in arg3 (instruction 24)
+18/0x04020000:  mov    0    2    0    // store the contents of reg 2 in reg 0
+19/0x10658000:  slt    6    5    8    // if reg 6 is less than reg 5 we haven't seen all the input
+		       	    	      // so set reg 8 to 1, set it to 0 otherwise
+1A/0x56810048:  bneq   8    1    72   // if reg 8 doesn't equal reg 1 (zero),
+		       	    	      // branch/goto the address in arg3 (instruction 18)
+1B/0xC10000C0:  wr     0    0    192  // store the data in reg 0 (accumulator) at address 192
+1C/0x92000000:  hlt    0    0    0    // the program has finished. halt.
+
+Job 3:
+Disassembly...
+Ins-#/Hex       instr  arg1 arg2 arg3 // comments
+01/0xC0500060:  rd     5    0    96  
+02/0x4B060000:  movi   0    6    0   
+03/0x4B010000:  movi   0    1    0   
+04/0x4B000000:  movi   0    0    0   
+05/0x4F0A0060:  ldi    0    10   96  
+06/0x4F0D00E0:  ldi    0    13   224 
+07/0x4C0A0004:  addi   0    10   4   
+08/0xC0BA0000:  rd     11   10   0   
+09/0x42BD0000:  st     11   13   0   
+0A/0x4C0D0004:  addi   0    13   4   
+0B/0x4C060001:  addi   0    6    1   
+0C/0x10658000:  slt    6    5    8   
+0D/0x56810018:  bneq   8    1    24  
+0E/0x4B060000:  movi   0    6    0   
+0F/0x4F0900E0:  ldi    0    9    224 
+10/0x43970000:  lw     9    7    0   
+11/0x05070000:  add    0    7    0   
+12/0x4C060001:  addi   0    6    1   
+13/0x4C090004:  addi   0    9    4   
+14/0x10658000:  slt    6    5    8   
+15/0x5681003C:  bneq   8    1    60  
+16/0x08050000:  div    0    5    0   
+17/0xC10000B0:  wr     0    0    176 
+18/0x92000000:  hlt    0    0    0   
+
+Job 4:
+What: Computes the first x numbers in the Fibonacci sequence.
+How:
+* First it sets a number of variables to zero and how many fibs to compute from address 76.
+* Then it initializes registers 2 and 3 to 0 and 1, the first 2 fibonacci numbers.
+* It stores the output address in reg 7 and writes out the next fib from reg 2 to the output buffer.
+* Then it computes the next fib and increments the output address and loop counter.
+* If it hasn't computed the number of fibs requested, it loops.
+Disassembly...
+Ins-#/Hex       instr  arg1 arg2 arg3 // comments
+01/0xC050004C:  rd     5    0    76   // store the data at address 76 (the input buffer) in reg 5
+02/0x4B060000:  movi   0    6    0    // set reg 6 to 0, it will act as a loop counter
+03/0x4B000000:  movi   0    0    0    // set reg 0 (the accumulator register) to 0
+04/0x4B010000:  movi   0    1    0    // set reg 1 (the zero register) to 0
+05/0x4B020000:  movi   0    2    0    // set reg 2 to 0, (fib 0)
+06/0x4B030001:  movi   0    3    1    // set reg 3 to 1, (fib 1)
+07/0x4F07009C:  ldi    0    7    156  // store the address 156 (the output buffer) in reg 7
+08/0xC1270000:  wr     2    7    0    // store the data in reg 2 at the address in reg 7
+09/0x4C070004:  addi   0    7    4    // add 4 to reg 7 (increment the output buffer index)
+0A/0x4C060001:  addi   0    6    1    // increment the loop counter
+0B/0x05320000:  add    3    2    0    // store the sum of reg 2 and reg 3 in reg 0 (accumulator)
+0C/0xC1070000:  wr     0    7    0    // store the data in reg 0 at the address in reg 7
+0D/0x4C070004:  addi   0    7    4    // add 4 to reg 7 (increment the output buffer index)
+0E/0x4C060001:  addi   0    6    1    // increment the loop counter
+0F/0x04230000:  mov    2    3    0    // store the contents of reg 3 in reg 2
+10/0x04300000:  mov    3    0    0    // store the contents of reg 0 (accumulator) in reg 3
+11/0x10658000:  slt    6    5    8    // if reg 6 is less than reg 5, we haven't made enough fibs
+		       	    	      // so set reg 8 to 1, set it to 0 otherwise
+12/0x56810028:  bneq   8    1    40   // if reg 8 doesn't equal reg 1 (zero),
+		       	    	      // branch/goto the address in arg3 (instruction 10)
+13/0x92000000:  hlt    0    0    0    // the program has finished halt.
