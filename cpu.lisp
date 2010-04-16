@@ -133,8 +133,8 @@
 			    (register-read cpu arg2))))
       (#x08 ; DIV
 	 (register-write cpu arg3
-			 (/ (register-read cpu arg1)
-			    (register-read cpu arg2))))
+			 (round (/ (register-read cpu arg1)
+				   (register-read cpu arg2)))))
       (#x09 ; AND, never used in provided asm
 	 (register-write cpu arg3
 			 (logand (register-read cpu arg1)

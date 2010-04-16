@@ -1,19 +1,16 @@
 **Brit's TODO
 From highest priority to lowest...
 
-2.
-Read the assembly for a few jobs. Figure out intended behavior.
-Ensure decoder faithfully implements said behavior. *sigh* What I wouldn't give for good docs.
+1.
+A current MOD bug seems to be caused by job 7. Job 7 unloads and sets its start-ram to -1 and then reloads somehow setting the breg to -1. Try to fetch on that and boom.
+Job 3 executes but we round the eventual result rather than storing the float average. Is this correct?
 Profiling still does nothing when enabled, finish it.
-Test decode and fetch on job 1.
 Test profiling.
-Test scheduler changes.
 Test kernel.
-
-4. *Very Low Priority, Speculative*
-Ensure correctness of MOV.
-
-;; Watch lecture 01 again, ensure conformance to ideas about RQ/Scheduler + PCB?
+2.
+Get multiple CPUs running and ensure that the concurrency issues are worked out with the ready-queue, memory, disk and pcb. Other places?
+3.
+Start on phase 2 (paging).
 
 Long Term/Fun:
 Just make the code ungross.
