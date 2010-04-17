@@ -163,6 +163,8 @@
 	     (register-write cpu arg3 1)
 	     (register-write cpu arg3 0)))
       (#x12 ; HLT
+	 (move-job (gethash (job-id cpu) *pcb*) :type :save)
+	 (setf (job-id cpu) nil)
 	 (short-scheduler cpu))
       (#x13 ; NOP, never used in provided asm
 	 nil)

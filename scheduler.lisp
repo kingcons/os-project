@@ -48,9 +48,6 @@
 	 (job (gethash job-id *pcb*)))
 ;    (when nil ; *context-switch-p*?
 ;      (context-switch))
-    (when (job-id cpu)
-      (move-job (gethash (job-id cpu) *pcb*) :type :save)
-      (setf (job-id cpu) nil))
     (if job-id
 	(dispatcher job job-id cpu)
 	(progn
