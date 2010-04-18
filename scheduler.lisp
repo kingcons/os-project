@@ -22,9 +22,14 @@
 	  until (> (job-total-space job) (memory-free *memory*))
 	  do (move-job job :type :load)
 	     (cl-heap:enqueue *ready-queue* job-id priority)
+	     ;; use get-internal-run-time here instead? both?
+	     (when *profiling*
+	       (let ((now (get-internal-real-time)))
+		 (setf (profile-waiting job) now
+		       (profile-completion job) now)))
 	     (incf priority))))
 
-(defun move-job (job &key type)
+(defun move-job (job &key type job-io)
   (let ((start-ram (start-ram job))
 	(start-disk (start-disk job))
 	(total-space (job-total-space job)))
@@ -39,6 +44,11 @@
 	 (loop for i from start-disk to (1- (+ start-disk total-space))
 	       for j from start-ram to (1- (+ start-ram total-space))
 	       do (memory-write *disk* i (memory-read *memory* j)))
+	 (when *profiling*
+	   (setf (profile-completion job)
+		 (time-difference (profile-completion job)
+				  (get-internal-real-time)))
+	   (setf (profile-io job) job-io))
 	 (setf (status job) :in-disk)
 	 (setf (start-ram job) -1)
 	 (format t "~d words saved to disk.~%" total-space)))))
@@ -60,5 +70,9 @@
   (setf (breg cpu) (start-ram job)
 	(pc cpu) 0
 	(ireg cpu) 0)
+  (when *profiling*
+    (setf (profile-waiting job)
+	  (time-difference (profile-waiting cpu)
+			   (get-internal-real-time))))
   (setf (status job) :running)
   (setf (job-id cpu) job-id))

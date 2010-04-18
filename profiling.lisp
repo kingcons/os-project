@@ -1,23 +1,22 @@
 (in-package :os-project)
 
-(defvar *profile-io* nil)
-(defvar *profile-waiting* nil)
-(defvar *profile-completion* nil)
+(defvar *profiling* nil)
 
-;; type options: :io, :waiting, :completion
-(defmacro profile (job-id type &rest body)
-  (let ((job (gethash job-id *pcb*))
-	(runtime (runtime body)))
-    `(incf ,(ecase type
-	      (:io
-		 (profile-io job))
-	      (:waiting
-		 (profile-waiting job))
-	      (:completion
-		 (profile-completion job)))
-	   ,runtime)))
+(defun time-difference (start end)
+  (coerce (/ (- end start) 1000) 'float))
+
+(defmacro profile (&body body)
+  `(if *profiling*
+       (progn
+	 (incf (car (job-io cpu)))
+	 (incf (cdr (job-io cpu))
+	       ;; obviously, this only gets us the real-time diff
+	       (runtime ,@body)))
+       ,@body))
 
 (defmacro runtime (&body body)
-  `(let ((pre ,(get-internal-real-time)))
+  `(let ((pre-real ,(get-internal-real-time))
+	 (pre-run ,(get-internal-run-time)))
      ,@body
-     (coerce (/ (- (get-internal-real-time) pre) 1000) 'float)))
+     (values (time-difference pre-real (get-internal-real-time))
+	     (time-difference pre-run (get-internal-run-time)))))

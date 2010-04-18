@@ -68,15 +68,15 @@
    (data-buffer :accessor data-buffer)
    (scratchpad :accessor scratchpad)
    (status :accessor status)
-   (identical-jobs :accessor identical-jobs :initform '())
+   (identical-jobs :accessor identical-jobs :initform nil)
    (profile-io
-    :initform 0
+    :initform nil
     :accessor profile-io)
    (profile-waiting 
-    :initform 0
+    :initform nil
     :accessor profile-waiting)
    (profile-completion
-    :initform 0
+    :initform nil
     :accessor profile-completion)))
 
 (defun clear-all-data ()

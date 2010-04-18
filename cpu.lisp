@@ -23,6 +23,9 @@
    (ins-register
     :initform 0
     :accessor ireg)
+   (job-io
+    :initform (list 0 0)
+    :accessor job-io)
    (running-job
     :initform nil
     :accessor job-id)))
@@ -96,27 +99,31 @@
       ;; I can't think of a good way to split out execution from decode.
       ;; Finally, some macros to tidy this up might be nice.
       (#x00 ; RD
-	 (register-write cpu arg1
-			 (read-hex-from-string
-			  (memory-read *memory*
-				       (address cpu (if (zerop arg2)
-							arg3
-							(register-read cpu arg2)))))))
+	 (profile
+	   (register-write cpu arg1
+			   (read-hex-from-string
+			    (memory-read *memory*
+					 (address cpu (if (zerop arg2)
+							  arg3
+							  (register-read cpu arg2))))))))
       (#x01 ; WR
-	 (memory-write *memory*
-		       (address cpu (if (zerop arg2)
-					arg3
+	 (profile
+	   (memory-write *memory*
+			 (address cpu (if (zerop arg2)
+					  arg3
 					(register-read cpu arg2)))
-		       (to-hex-string (register-read cpu arg1))))
+			 (to-hex-string (register-read cpu arg1)))))
       (#x02 ; ST
-	 (memory-write *memory*
-		       (address cpu (register-read cpu arg2))
-		       (to-hex-string (register-read cpu arg1))))
+	 (profile
+	   (memory-write *memory*
+			 (address cpu (register-read cpu arg2))
+			 (to-hex-string (register-read cpu arg1)))))
       (#x03 ; LW
-	 (register-write cpu arg2
-			 (read-hex-from-string
-			  (memory-read *memory*
-				       (address cpu (register-read cpu arg1))))))
+	 (profile
+	   (register-write cpu arg2
+			   (read-hex-from-string
+			    (memory-read *memory*
+					 (address cpu (register-read cpu arg1)))))))
       (#x04 ; MOV, INCOMPLETE, see peculiar use case in Job 7
 	 (register-write cpu arg1 (register-read cpu arg2)))
       (#x05 ; ADD
@@ -163,7 +170,10 @@
 	     (register-write cpu arg3 1)
 	     (register-write cpu arg3 0)))
       (#x12 ; HLT
-	 (move-job (gethash (job-id cpu) *pcb*) :type :save)
+	 (if *profiling*
+	     (move-job (gethash (job-id cpu) *pcb*) :type :save
+		                                    :job-io (job-io cpu))
+	     (move-job (gethash (job-id cpu) *pcb*) :type :save))
 	 (setf (job-id cpu) nil)
 	 (short-scheduler cpu))
       (#x13 ; NOP, never used in provided asm
