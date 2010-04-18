@@ -19,13 +19,11 @@
 (defun debugging (setting)
   (ecase setting
     (:on
-       (trace memory-read memory-write
-	      register-read register-write
-	      fetch decode))
+       (trace memory-read memory-write time-difference
+	      reg-r reg-w fetch decode))
     (:off
-       (untrace memory-read memory-write
-		register-read register-write
-		fetch decode))))
+       (untrace memory-read memory-write time-difference
+		reg-r reg-w fetch decode))))
 
 (defun reset ()
   (clear-all-data)

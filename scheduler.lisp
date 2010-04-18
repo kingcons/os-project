@@ -72,7 +72,7 @@
 	(ireg cpu) 0)
   (when *profiling*
     (setf (profile-waiting job)
-	  (time-difference (profile-waiting cpu)
+	  (time-difference (profile-waiting job)
 			   (get-internal-real-time))))
   (setf (status job) :running)
   (setf (job-id cpu) job-id))
