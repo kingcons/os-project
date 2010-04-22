@@ -30,8 +30,6 @@
     :initform nil
     :accessor job-id)))
 
-(defvar *cpu1* (make-instance 'cpu))
-
 (defmethod registers-clear ((cpu cpu))
   (setf (registers cpu)	(make-array 16 :element-type 'register)))
 
@@ -188,7 +186,3 @@
       (#x1a ; BLZ, never used in provided asm
 	 (when (< (reg-r cpu arg1) 0)
 	   (setf (pc cpu) (address cpu arg3 :with-base nil)))))))
-
-(defun reset ()
-  (clear-all-data)
-  (setf *cpu1* (make-instance 'cpu)))

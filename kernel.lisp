@@ -1,31 +1,53 @@
 (in-package :os-project)
 
+(defvar *cpu-count* 1)
+(defvar *cpu-list* nil)
+
 ;Policy options: #'job-total-space, #'ins-count, #'data-count, #'priority
 (defun init ()
   (loader *data2*)
   (setf *job-order* (order-jobs :policy #'ins-count :comparison #'<))
   (long-scheduler)
-  (short-scheduler *cpu1*))
+  (loop for i from 1 to *cpu-count* do
+    (let ((cpu (make-instance 'cpu)))
+      (push cpu *cpu-list*)
+      (short-scheduler cpu))))
 
-(defun kernel ()
-  (catch 'no-more-jobs
-    (loop (fetch *cpu1*)
-	  (decode *cpu1*))))
+;; Thanks to an old paste from lnostdal.
+;; This ensures threads all share *standard-output*.
+(defmacro with-thread (name &body body)
+  "Defines a thread that executes `body'. Returns the thread-instance."
+  (let ((st (gensym)))
+    `(let ((,st *standard-output*))
+       (sb-thread:make-thread
+        (lambda ()
+          (let ((*standard-output* ,st))
+            ,@body))
+        :name ,name))))
+
+(defmethod kernel ((cpu cpu))
+  (with-thread "CPU Kernel"
+    (catch 'no-more-jobs
+      (loop (fetch cpu)
+	    (decode cpu)))))
 
 (defun os-driver ()
   (init)
-  (kernel))
+  (loop for cpu in *cpu-list* do
+    (kernel cpu)))
 
+;; There is a better way to write this...
+;; i.e. switches for whether to debug memory/timing/cpu/etc
 (defun debugging (setting)
   (ecase setting
     (:on
-       (trace memory-read memory-write time-difference
-	      reg-r reg-w fetch decode))
+       (trace memory-read memory-write reg-r reg-w
+	fetch decode registers-clear time-difference))
     (:off
-       (untrace memory-read memory-write time-difference
-		reg-r reg-w fetch decode))))
+       (untrace memory-read memory-write reg-r reg-w
+	fetch decode registers-clear time-difference))))
 
 (defun reset ()
   (clear-all-data)
   (setf *ready-queue* (sb-queue:make-queue))
-  (setf *cpu1* (make-instance 'cpu)))
+  (setf *cpu-list* nil))

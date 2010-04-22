@@ -2,7 +2,7 @@
   :author ("Justin Caratzas" "Brit Butler")
   :version "0.1"
   :license "LLGPL"
-  :depends-on (:split-sequence :sb-queue :chanl)
+  :depends-on (:split-sequence :chanl :sb-queue :sb-thread)
   :components ((:file "packages")
 	       (:file "storage")
 	       (:file "loader")
