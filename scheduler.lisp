@@ -1,6 +1,6 @@
 (in-package :os-project)
 
-(defparameter *ready-queue* (make-instance 'cl-heap:priority-queue))
+(defparameter *ready-queue* (sb-queue:make-queue))
 (defvar *job-order* nil)
 
 (defun job-total-space (job)
@@ -21,7 +21,7 @@
 	  for job = (gethash job-id *pcb*)
 	  until (> (job-total-space job) (memory-free *memory*))
 	  do (move-job job :type :load)
-	     (cl-heap:enqueue *ready-queue* job-id priority)
+	     (sb-queue:enqueue job-id *ready-queue*)
 	     ;; use get-internal-run-time here instead? both?
 	     (when *profiling*
 	       (let ((now (get-internal-real-time)))
@@ -54,7 +54,7 @@
 	 (format t "~d words saved to disk.~%" total-space)))))
 
 (defun short-scheduler (cpu)
-  (let* ((job-id (cl-heap:dequeue *ready-queue*))
+  (let* ((job-id (sb-queue:dequeue *ready-queue*))
 	 (job (gethash job-id *pcb*)))
 ;    (when nil ; *context-switch-p*?
 ;      (context-switch))

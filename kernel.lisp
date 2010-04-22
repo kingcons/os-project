@@ -27,5 +27,5 @@
 
 (defun reset ()
   (clear-all-data)
-  (setf *ready-queue* (make-instance 'cl-heap:priority-queue))
+  (setf *ready-queue* (sb-queue:make-queue))
   (setf *cpu1* (make-instance 'cpu)))
