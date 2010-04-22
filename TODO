@@ -1,6 +1,11 @@
 **Brit's TODO
 From highest priority to lowest...
 
+http://www.ai.mit.edu/projects/iiip/doc/CommonLISP/HyperSpec/Body/speope_unwind-protect.html#unwind-protect
+http://cl-cookbook.sourceforge.net/process.html#output
+http://common-lisp.net/project/eager-future/
+http://github.com/sykopomp/chanl
+
 ;; How the hell are we going to do multithreading? Profiling isn't a big deal but this...
 Short-scheduler is the only thing that writes to disk besides the loader and HLT.
 Only time disk is read from is when the long-scheduler runs.
