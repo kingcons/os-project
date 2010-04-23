@@ -1,26 +1,6 @@
 **Brit's TODO
 From highest priority to lowest...
 
-http://www.ai.mit.edu/projects/iiip/doc/CommonLISP/HyperSpec/Body/speope_unwind-protect.html#unwind-protect
-http://cl-cookbook.sourceforge.net/process.html#output
-http://common-lisp.net/project/eager-future/
-http://github.com/sykopomp/chanl
-
-;; How the hell are we going to do multithreading? Profiling isn't a big deal but this...
-Short-scheduler is the only thing that writes to disk besides the loader and HLT.
-Only time disk is read from is when the long-scheduler runs.
-CPU/memory interactions: fetch, RD,WR,ST,LW. CPU doesn't directly interact with PCB, only scheduler.
-Observation: When RQ becomes empty, CPUs need to know not to call short-scheduler until they've all finished their jobs and written them back to disk. Can't do that with short-scheduler as written. HLT now writes jobs back to disk before calling short-scheduler.
-
-;; really have two things to worry about, *RQ* and *memory*.
-;; Use chanl or some sort of blocking message queue to protect? Boom, done?
-Ready queue and short scheduler's memory-reset/long-scheduler block are all we have to worry about.
-Maybe we're thinking about this the wrong way. Each job has it's own (memory,disk,pcb).
-Only things that operate on multiple jobs are loader and long-scheduler/memory-reset, right?
-As long as no job winds up on several CPUs, mem-reset doesn't eat work and RQ ops are atomic...
-CPU/Threads can read/write and interleave calls to PCB and memory willy-nilly, right?
-Each CPU will be running a different job, writing to different bits of memory (or disk when HLT, think hard about HLT) that aren't moving, and no PCB at all besides HLT/short-scheduler.
-
 ProjSpec1 talks about trapping attempted memory accesses outside each CPUs job. We can have a range slot that says what memory-range the CPU is allowed to play in and yell if it attempts to access something outside that. None of the instructions do, of course, so this would be bonus. But it would bea good opportunity to show off the conditions and restarts in CL.
 
 Each CPU is allowed to have a cache equal to the size of the largest job (67, by my count). Then we'd have to handle each one of those...probably with sane threading semantics. Sounds retarded. What IO bottleneck does it actually save me from in real life again? Right. Nothing.
@@ -34,12 +14,8 @@ We should know how\what we're profiling to do this.
 -- that won't deal with IO but should handle the rest.
 
 1.
-Job 3 executes but we round the eventual result rather than storing the float average. Is this okay?
-Profiling still does nothing when enabled, finish it.
-Test profiling.
+Multi-cpu support is in but we need to experiment with profiling and ensure that all jobs are completing in parallel. Right now, all threads spawned on the initial run print to *standard-output* but it seems like only one thread prints to *standard-output* on subsequent runs (i.e. (reset) and (os-driver)). Hopefully, it's just an I/O and bindings issue and not a more serious threading/correctness issue.
 2.
-Get multiple CPUs running and ensure that the concurrency issues are worked out with the ready-queue, memory, disk and pcb. Other places?
-3.
 Start on phase 2 (paging).
 
 Long Term/Fun:
