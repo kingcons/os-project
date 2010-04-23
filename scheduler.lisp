@@ -12,7 +12,10 @@
 until all jobs are written to disk.")
 
 (defmacro wait-until-zero ((semaphore) &body body)
-"This macro has nutty indentation, accesses private sb-thread symbols all over the place and should under no circumstances ever be reused. It should behave properly for its given use case but would be better off replaced by a wait-thread construct of some kind by a person far smarter than I."
+"This macro has nutty indentation, accesses private sb-thread symbols all
+over the place and should under no circumstances ever be reused. It should
+behave properly for its given use case but would be better off replaced by
+a wait-thread construct of some kind by a person far smarter than I."
   (let ((count (gensym)))
     `(sb-thread::with-system-mutex ((sb-thread::semaphore-mutex ,semaphore)
 				    :allow-with-interrupts t)
@@ -42,20 +45,18 @@ until all jobs are written to disk.")
 	comparison :key #'cdr))
 
 (defun long-scheduler ()
-  (let ((priority 1))
-    (unless *job-order*
-      (throw 'no-more-jobs nil))
-    (loop for job-id = (car (pop *job-order*)) while job-id
-	  for job = (gethash job-id *pcb*)
-	  until (> (job-total-space job) (memory-free *memory*))
-	  do (move-job job :type :load)
-	     (sb-queue:enqueue job-id *ready-queue*)
-	     ;; use get-internal-run-time here instead? both?
-	     (when *profiling*
-	       (let ((now (get-internal-real-time)))
-		 (setf (profile-waiting job) now
-		       (profile-completion job) now)))
-	     (incf priority))))
+  (unless *job-order*
+    (throw 'no-more-jobs nil))
+  (loop for job-id = (car (pop *job-order*)) while job-id
+	for job = (gethash job-id *pcb*)
+	until (> (job-total-space job) (memory-free *memory*))
+	do (move-job job :type :load)
+	   (sb-queue:enqueue job-id *ready-queue*)
+	   ;; use get-internal-run-time here instead? both?
+	   (when *profiling*
+	     (let ((now (get-internal-real-time)))
+	       (setf (profile-waiting job) now
+		     (profile-completion job) now)))))
 
 (defun move-job (job &key type job-io)
   (let ((start-ram (start-ram job))
@@ -67,7 +68,6 @@ until all jobs are written to disk.")
 	 (loop for i from start-disk to (1- (+ start-disk total-space))
 	       do (memory-push-end *memory* (memory-read *disk* i)))
 	 (setf (status job) :in-memory)
-	 (sb-thread:signal-semaphore *rj-semaphore*)
 	 (format t "~d words loaded into RAM.~%" total-space))
       (:save
 	 (loop for i from start-disk to (1- (+ start-disk total-space))
@@ -84,16 +84,20 @@ until all jobs are written to disk.")
 	 (format t "~d words saved to disk.~%" total-space)))))
 
 (defun short-scheduler (cpu)
-  "In the case where job-id is null, the ss-mutex will be held blocking other threads from calling the short-scheduler. With the other threads unable to load new jobs via the short-scheduler, we can wait for rj-semaphore to be zero to indicate that all jobs have been saved to disk."
+  "In the case where job-id is null, the ss-mutex will be held blocking
+other threads from calling the short-scheduler. With the other threads
+unable to load new jobs via the short-scheduler, we can wait for
+rj-semaphore to be zero to indicate that all jobs have been saved to disk."
   (let* ((job-id (sb-queue:dequeue *ready-queue*))
 	 (job (gethash job-id *pcb*)))
 ;    (when nil ; *context-switch-p*?
 ;      (context-switch))
     (if job-id
 	(dispatcher job job-id cpu)
-	(wait-until-zero (*rj-semaphore*)
-	  (memory-reset *memory*)
-	  (long-scheduler)
+	(progn
+	  (wait-until-zero (*rj-semaphore*)
+	    (memory-reset *memory*)
+	    (long-scheduler))
 	  (short-scheduler cpu)))))
 
 (defun dispatcher (job job-id cpu)
@@ -106,4 +110,5 @@ until all jobs are written to disk.")
 	  (time-difference (profile-waiting job)
 			   (get-internal-real-time))))
   (setf (status job) :running)
-  (setf (job-id cpu) job-id))
+  (setf (job-id cpu) job-id)
+  (sb-thread:signal-semaphore *rj-semaphore*))
