@@ -1,6 +1,6 @@
 (in-package :os-project)
 
-(defvar *cpu-count* 1)
+(defvar *cpu-count* 4)
 (defvar *cpu-list* nil)
 
 ;Policy options: #'job-total-space, #'ins-count, #'data-count, #'priority

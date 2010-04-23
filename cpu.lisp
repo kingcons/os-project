@@ -161,7 +161,8 @@
 	     (move-job (gethash (job-id cpu) *pcb*) :type :save))
 	 (setf (job-io cpu) (cons 0 0))
 	 (setf (job-id cpu) nil)
-	 (short-scheduler cpu))
+	 (sb-thread:with-mutex (*ss-mutex*)
+	   (short-scheduler cpu)))
       (#x13 ; NOP, never used in provided asm
 	 nil)
       (#x14 ; JMP, never used in provided asm
