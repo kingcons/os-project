@@ -47,12 +47,13 @@ a wait-thread construct of some kind by a person far smarter than I."
 (defun long-scheduler ()
   (unless *job-order*
     (throw 'no-more-jobs nil))
-  (loop for job-id = (car (pop *job-order*)) while job-id
+  (loop for job-id = (caar *job-order*) while job-id
 	for job = (gethash job-id *pcb*)
 	until (> (job-total-space job) (memory-free *memory*))
 	do (move-job job :type :load)
 	   (sb-queue:enqueue job-id *ready-queue*)
 	   ;; use get-internal-run-time here instead? both?
+           (pop *job-order*)
 	   (when *profiling*
 	     (let ((now (get-internal-real-time)))
 	       (setf (profile-waiting job) now
