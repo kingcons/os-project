@@ -1,38 +1,14 @@
 (in-package :os-project)
 
-(defparameter *ready-queue* (sb-queue:make-queue))
+(defparameter *ready-queue* (sb-concurrency:make-queue))
 (defvar *job-order* nil)
 
-(defvar *ss-mutex*
-  (sb-thread:make-mutex :name "Short Scheduler Mutex")
+(defstruct (running-jobs (:conc-name rj-))
+  (count 0 :type sb-vm:word))
+(defvar *job-count* (make-running-jobs)
+  "Used to track the running job count with atomic-incf and decf.")
+(defvar *ss-mutex* (sb-thread:make-mutex :name "Short Scheduler Mutex")
   "Ensures that only one CPU runs the Short Scheduler at a time.")
-(defvar *rj-semaphore*
-  (sb-thread:make-semaphore :name "Running Jobs Semaphore")
-  "Helps ensure that memory-reset+long-scheduler aren't invoked
-until all jobs are written to disk.")
-
-(defmacro wait-until-zero ((semaphore) &body body)
-"This macro has nutty indentation, accesses private sb-thread symbols all
-over the place and should under no circumstances ever be reused. It should
-behave properly for its given use case but would be better off replaced by
-a wait-thread construct of some kind by a person far smarter than I."
-  (let ((count (gensym)))
-    `(sb-thread::with-system-mutex ((sb-thread::semaphore-mutex ,semaphore)
-				    :allow-with-interrupts t)
-       (let ((,count (sb-thread::semaphore-%count ,semaphore)))
-	 (if (zerop ,count)
-	     (progn ,@body)
-	     (unwind-protect
-		  (progn
-		    (incf (sb-thread::semaphore-waitcount ,semaphore))
-		    (loop until (zerop
-				  (setf ,count (sb-thread::semaphore-%count
-						,semaphore)))
-			  do (sb-thread:condition-wait
-			      (sb-thread::semaphore-queue ,semaphore)
-			      (sb-thread::semaphore-mutex ,semaphore)))
-		    ,@body
-		    (decf (sb-thread::semaphore-waitcount ,semaphore)))))))))
 
 (defun job-total-space (job)
   (with-slots (ins-count data-buffer data-count scratchpad) job
@@ -51,7 +27,7 @@ a wait-thread construct of some kind by a person far smarter than I."
 	for job = (gethash job-id *pcb*)
 	until (> (job-total-space job) (memory-free *memory*))
 	do (move-job job :type :load)
-	   (sb-queue:enqueue job-id *ready-queue*)
+	   (sb-concurrency:enqueue job-id *ready-queue*)
 	   ;; use get-internal-run-time here instead? both?
            (pop *job-order*)
 	   (when *profiling*
@@ -81,25 +57,27 @@ a wait-thread construct of some kind by a person far smarter than I."
 	   (setf (profile-io job) job-io))
 	 (setf (status job) :in-disk)
 	 (setf (start-ram job) -1)
-	 (sb-thread:wait-on-semaphore *rj-semaphore*)
+         (sb-ext:atomic-decf (rj-count *job-count*))
 	 (format t "~d words saved to disk.~%" total-space)))))
 
 (defun short-scheduler (cpu)
   "In the case where job-id is null, the ss-mutex will be held blocking
 other threads from calling the short-scheduler. With the other threads
-unable to load new jobs via the short-scheduler, we can wait for
-rj-semaphore to be zero to indicate that all jobs have been saved to disk."
-  (let* ((job-id (sb-queue:dequeue *ready-queue*))
+unable to load new jobs via the short-scheduler, we set up an event loop
+to periodically check to see if all jobs have finished running. If they
+have, we call reset *memory* and invoke the long scheduler, otherwise
+we sleep a bit."
+  (let* ((job-id (sb-concurrency:dequeue *ready-queue*))
 	 (job (gethash job-id *pcb*)))
-;    (when nil ; *context-switch-p*?
-;      (context-switch))
     (if job-id
 	(dispatcher job job-id cpu)
 	(progn
-	  (wait-until-zero (*rj-semaphore*)
-	    (memory-reset *memory*)
-	    (long-scheduler))
-	  (short-scheduler cpu)))))
+	  (loop until (not (sb-concurrency:queue-empty-p *ready-queue*)) do
+            (if (zerop (rj-count *job-count*))
+                (progn
+                  (memory-reset *memory*)
+                  (long-scheduler))
+                (sleep 0.001)))))))
 
 (defun dispatcher (job job-id cpu)
   (registers-clear cpu)
@@ -112,4 +90,4 @@ rj-semaphore to be zero to indicate that all jobs have been saved to disk."
 			   (get-internal-real-time))))
   (setf (status job) :running)
   (setf (job-id cpu) job-id)
-  (sb-thread:signal-semaphore *rj-semaphore*))
+  (sb-ext:atomic-incf (rj-count *job-count*)))

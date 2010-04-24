@@ -41,13 +41,15 @@
 (defun debugging (setting)
   (ecase setting
     (:on
-       (trace memory-read memory-write reg-r reg-w
-	fetch decode registers-clear time-difference))
+       (trace ;memory-read memory-write reg-r reg-w
+	;fetch decode registers-clear time-difference
+        dispatcher move-job memory-reset rj-count))
     (:off
-       (untrace memory-read memory-write reg-r reg-w
-	fetch decode registers-clear time-difference))))
+       (untrace ;memory-read memory-write reg-r reg-w
+	;fetch decode registers-clear time-difference
+        dispatcher move-job memory-reset rj-count))))
 
 (defun reset ()
   (clear-all-data)
-  (setf *ready-queue* (sb-queue:make-queue))
+  (setf *ready-queue* (sb-concurrency:make-queue))
   (setf *cpu-list* nil))

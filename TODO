@@ -14,16 +14,9 @@ We should know how\what we're profiling to do this.
 -- that won't deal with IO but should handle the rest.
 
 1.
-Bugs:
-In the single-cpu case, job 9 seems to be skipped somehow.
--- It appears to be the job that is dequeued but there's not enough space for. Whoops, peep instead.
--- At least it's not a concurrency bug, it's a I'm dumb and didn't notice sooner bug.
-In the multi-cpu case, the troubles are more serious and seem to involve all jobs from
-the second long-scheduler invocation (2,5,9,10,12,13,15,17,18,19,20,22,24,28,29).
-Profile-io is also nil particularly often. Why is that?
-One possibility: multiple threads are catching the 'no-more-jobs tag thrown from long-scheduler.
-2.
 Start on phase 2 (paging).
+2.
+Can we ensure that profile-io is working correctly for the timing (not call count)?
 
 Long Term/Fun:
 Just make the code ungross.
