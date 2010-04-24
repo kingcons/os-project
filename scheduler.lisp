@@ -14,19 +14,21 @@
 	comparison :key #'cdr))
 
 (defun long-scheduler ()
-  (unless *job-order*
-    (throw 'no-more-jobs nil))
-  (loop for job-id = (caar *job-order*) while job-id
-	for job = (gethash job-id *pcb*)
-	until (> (job-total-space job) (memory-free *memory*))
-	do (move-job job :type :load)
+  (let ((priority 1))
+    (unless *job-order*
+      (throw 'no-more-jobs nil))
+    (loop for job-id = (caar *job-order*) while job-id
+          for job = (gethash job-id *pcb*)
+          until (> (job-total-space job) (memory-free *memory*))
+          do (move-job job :type :load)
 	   (cl-heap:enqueue *ready-queue* job-id priority)
 	   ;; use get-internal-run-time here instead? both?
            (pop *job-order*)
 	   (when *profiling*
 	     (let ((now (get-internal-real-time)))
 	       (setf (profile-waiting job) now
-		     (profile-completion job) now)))))
+		     (profile-completion job) now))))
+    (incf priority)))
 
 (defun move-job (job &key type job-io)
   (let ((start-ram (start-ram job))
