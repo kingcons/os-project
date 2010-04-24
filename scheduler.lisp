@@ -77,7 +77,8 @@ we sleep a bit."
                 (progn
                   (memory-reset *memory*)
                   (long-scheduler))
-                (sleep 0.001)))))))
+                (sleep 0.001)))
+          (short-scheduler cpu)))))
 
 (defun dispatcher (job job-id cpu)
   (registers-clear cpu)
